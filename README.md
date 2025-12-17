@@ -45,34 +45,34 @@ This project uses two distinct methods for handling sensitive data, backed by **
 ├── clusters/               # ArgoCD ApplicationSets & Cluster Config
 └── bootstrap/              # Initial Cluster Seeding
 
-  
+```
 
-Workflow: From Commit to Cluster
+## Workflow: From Commit to Cluster
 
-    Change: I modify an application definition in apps/<name>/*.
+1. Change: I modify an application definition in apps/<name>/*.
 
-    CI Audit: GitLab CI detects the change, runs kustomize build, and generates a diff of the hydrated manifests.
+2. CI Audit: GitLab CI detects the change, runs kustomize build, and generates a diff of the hydrated manifests.
 
-    Merge: Once approved and merged, ArgoCD detects the change.
+3. Merge: Once approved and merged, ArgoCD detects the change.
 
-    Sync:
+4. Sync:
 
-        ApplicationSets ensure the app is targeted to the correct cluster.
+- ApplicationSets ensure the app is targeted to the correct cluster.
 
-        Kustomize inflates the Helm chart and pulls in the Global Components (e.g., Valkey).
+- Kustomize inflates the Helm chart and pulls in the Global Components (e.g., Valkey).
 
-        AVP replaces placeholder strings with actual secrets.
+- AVP replaces placeholder strings with actual secrets.
 
-        Apply: The final manifest is applied to the cluster.
+- Apply: The final manifest is applied to the cluster.
 
-Key Technologies
+## Key Technologies
 
-    ArgoCD: Deployment controller and ApplicationSet logic.
+- ArgoCD: Deployment controller and ApplicationSet logic.
 
-    Kustomize: Configuration overlay, Helm inflation, and Component aggregation.
+- Kustomize: Configuration overlay, Helm inflation, and Component aggregation.
 
-    CloudNativePG: Operator for orchestrating PostgreSQL workloads.
+- CloudNativePG: Operator for orchestrating PostgreSQL workloads.
 
-    Valkey: High-performance key-value store (Redis fork).
+- Valkey: High-performance key-value store (Redis fork).
 
-    Renovate: Automated dependency updates for Docker images and Helm charts..
+- Renovate: Automated dependency updates for Docker images and Helm charts.
