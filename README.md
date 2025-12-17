@@ -49,7 +49,7 @@ This project uses two distinct methods for handling sensitive data, backed by **
 
 ## Workflow: From Commit to Cluster
 
-1. Change: I modify an application definition in apps/<name>/*.
+1. Change: I modify an application definition in apps/\<name\>/*.
 
 2. CI Audit: GitLab CI detects the change, runs kustomize build, and generates a diff of the hydrated manifests.
 
