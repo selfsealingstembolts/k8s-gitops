@@ -1,0 +1,4 @@
+---
+cluster:
+  name: oci-oke-prod
+  address: https://10.128.0.5:6443

@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: %NAMESPACE%
+
+resources:
+  - service.yaml
+  - deployment.yaml
+  - ingress.yaml
+  - pvc.yaml
+
+commonLabels:
+  app.kubernetes.io/instance: %NAME%
+  app.kubernetes.io/name: %NAME%
+
+images:
+  - name: %IMAGE%
+    newTag: %TAG%

@@ -1,0 +1,94 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kube-prometheus-chart
+valuesInline:
+
+  ## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
+  ##
+  grafana:
+    enabled: true
+
+    ingress:
+      enabled: true
+
+    # Use an existing secret for the admin user.
+    admin:
+      ## Name of the secret. Can be templated.
+      existingSecret: grafana-admin-secret
+      userKey: user
+      passwordKey: password
+
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        labelValue: "1"
+        multicluster:
+          global:
+            enabled: true
+          etcd:
+            enabled: true
+        provider:
+          disableDelete: true
+          allowUiUpdates: false
+          foldersFromFilesStructure: true
+        searchNamespace: ALL
+        watchMethod: WATCH
+        resource: configmap
+        folderAnnotation: "dashboard-folder"
+      datasources:
+        enabled: true
+        defaultDatasourceEnabled: false
+
+        uid: prometheus
+
+        ## URL of prometheus datasource
+        ##
+        # url: http://prometheus-stack-prometheus:9090/
+
+        # If not defined, will use prometheus.prometheusSpec.scrapeInterval or its default
+        # defaultDatasourceScrapeInterval: 15s
+
+        ## Annotations for Grafana datasource configmaps
+        ##
+        annotations: {}
+
+        ## Create datasource for each Pod of Prometheus StatefulSet;
+        ## this uses headless service `prometheus-operated` which is
+        ## created by Prometheus Operator
+        ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/0fee93e12dc7c2ea1218f19ae25ec6b893460590/pkg/prometheus/statefulset.go#L255-L286
+        createPrometheusReplicasDatasources: false
+        label: grafana_datasource
+        labelValue: "1"
+
+        ## Field with internal link pointing to existing data source in Grafana.
+        ## Can be provisioned via additionalDataSources
+        exemplarTraceIdDestinations: {}
+          # datasourceUid: Jaeger
+          # traceIdLabelName: trace_id
+
+    ## Configure additional grafana datasources (passed through tpl)
+    ## ref: http://docs.grafana.org/administration/provisioning/#datasources
+    additionalDataSources:
+    # - name: prometheus-sample
+    #   access: proxy
+    #   basicAuth: true
+    #   basicAuthPassword: pass
+    #   basicAuthUser: daco
+    #   editable: false
+    #   jsonData:
+    #       tlsSkipVerify: true
+    #   orgId: 1
+    #   type: prometheus
+    #   url: https://{{ printf "%s-prometheus.svc" .Release.Name }}:9090
+    #   version: 1
+      - name: Thanos
+        type: prometheus
+        access: proxy
+        url: http://thanos-query-frontend.thanos.svc.cluster.local:9090
+        isDefault: true
+        editable: false
+        jsonData:
+          prometheusType: Thanos

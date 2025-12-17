@@ -1,0 +1,25 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+generators:
+  - ./helm
+
+secretGenerator:
+  - name: thanos-objstore-config
+    files:
+      - thanos.yaml
+    options:
+      disableNameSuffixHash: true
+
+patches:
+  - target:
+      name: prometheuses.monitoring.coreos.com
+      kind: CustomResourceDefinition
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/argocd.argoproj.io~1sync-options"
+        value: "ServerSideApply=true"

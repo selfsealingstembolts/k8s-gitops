@@ -1,0 +1,8 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - https://download.elastic.co/downloads/eck/2.7.0/crds.yaml
+  - https://download.elastic.co/downloads/eck/2.7.0/operator.yaml

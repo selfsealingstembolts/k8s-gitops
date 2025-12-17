@@ -1,0 +1,26 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-chart
+valuesInline:
+  global:
+    tlsDisable: false
+  server:
+    extraEnvironmentVars:
+      VAULT_CACERT: "/vault/userconfig/tls-ca/ca.crt"
+
+    volumes:
+      - name: userconfig-vault-tls-ingress
+        secret:
+          secretName: vault-tls-ingress
+      - name: userconfig-vault-tls-ca
+        configMap:
+          name: freeipa-bundle
+    volumeMounts:
+      - name: userconfig-vault-tls-ingress
+        mountPath: "/vault/userconfig/tls-server"
+        readOnly: true
+      - name: userconfig-vault-tls-ca
+        mountPath: "/vault/userconfig/tls-ca"
+        readOnly: true

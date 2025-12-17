@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - vmservicescrape.yaml
+
+patches:
+  - target:
+      kind: Tenant
+    patch: |-
+      - op: add
+        path: "/spec/env/-"
+        value:
+          name: MINIO_PROMETHEUS_AUTH_TYPE
+          value: public

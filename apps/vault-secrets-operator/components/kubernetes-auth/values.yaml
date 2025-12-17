@@ -1,0 +1,48 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-secrets-operator-chart
+valuesInline:
+  # Configures and deploys the default VaultAuthMethod CR which will be used by resources
+  # if they do not specify a VaultAuthMethod reference. The name is 'default' and will
+  # always be installed in the same namespace as the operator.
+  # NOTE:
+  # * It is strongly recommended to deploy the vault secrets operator in a secure Vault environment
+  #   which includes a configuration utilizing TLS and installing Vault into its own restricted namespace.
+  defaultAuthMethod:
+    # toggles the deployment of the VaultAuthMethod CR
+    # @type: boolean
+    enabled: true
+
+    # Vault namespace for the VaultAuthMethod CR
+    # @type: string
+    namespace: ""
+
+    # Kubernetes namespace glob patterns which are allow-listed for use with the default AuthMethod.
+    # @type: array<string>
+    allowedNamespaces: []
+
+    # Vault Auth method to be used with the VaultAuthMethod CR
+    # @type: string
+    method: kubernetes
+
+    # Mount path for the Vault Auth Method.
+    # @type: string
+    mount: kubernetes
+
+    # Vault Kubernetes auth method specific configuration
+    kubernetes:
+      # Vault Auth Role to use
+      # This is a required field and must be setup in Vault prior to deploying the helm chart
+      # if `defaultAuthMethod.enabled=true`
+      # @type: string
+      role: ""
+
+      # Kubernetes ServiceAccount associated with the default Vault Auth Role
+      # @type: string
+      serviceAccount: default
+
+      # Token Audience should match the audience of the vault kubernetes auth role.
+      # @type: array<string>
+      tokenAudiences: []

@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: registry
+          image: registry:2.8.2
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OTEL_TRACES_EXPORTER
+              value: "none"
+          envFrom:
+            - secretRef:
+                name: registry-secret
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/distribution/config.yml
+              subPath: config.yml
+          livenessProbe:
+            httpGet:
+              path: /v2/
+              port: 5000
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 30
+            failureThreshold: 30
+            timeoutSeconds: 1
+            periodSeconds: 5
+      volumes:
+        - configMap:
+            name: registry-config
+          name: config

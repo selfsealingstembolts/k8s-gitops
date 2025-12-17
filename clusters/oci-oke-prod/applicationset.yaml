@@ -1,0 +1,116 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: oci-oke-prod-generator
+spec:
+  goTemplate: true
+  generators:
+  - matrix:
+      generators:
+      - git:
+          repoURL: https://gitlab.example.com/k8s-gitops.git
+          revision: HEAD
+          files:
+          - path: clusters/oci-oke-prod/config.yaml
+
+      - list:
+          elements:
+          - name: cert-manager
+            namespace: cert-manager
+            autoSync: true
+          - name: trust-manager
+            namespace: cert-manager
+            autoSync: true
+          - name: external-dns
+            namespace: external-dns
+            autoSync: true
+
+          - name: ingress-nginx
+            namespace: ingress-nginx
+            autoSync: true
+          - name: cloudflared
+            namespace: ingress-nginx
+            autoSync: true
+          - name: longhorn
+            namespace: longhorn-system
+            autoSync: false
+          - name: vault
+            namespace: vault
+            autoSync: false
+
+          - name: vm-k8s-stack
+            namespace: victoriametrics
+            autoSync: true
+            syncOptions:
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: ""
+                kind: Secret
+                name: vm-stack-victoria-metrics-operator-validation
+                namespace: victoriametrics
+                jsonPointers:
+                  - /data
+              - group: admissionregistration.k8s.io
+                kind: ValidatingWebhookConfiguration
+                name: vm-stack-victoria-metrics-operator-admission
+                jqPathExpressions:
+                  - '.webhooks[]?.clientConfig.caBundle'
+
+          - name: gotify
+            namespace: gotify
+            autoSync: true
+
+  ignoreApplicationDifferences:
+    - jsonPointers:
+      # Allow automated sync policy to be disabled manually.
+      # - /spec/syncPolicy/automated
+      # Allow target revision to be set manually for PR testing,
+      - /spec/source/targetRevision
+
+  template:
+    metadata:
+      name: "{{ .cluster.name }}-{{ .name }}"
+      annotations:
+        argocd.argoproj.io/manifest-generate-paths: .;../../base;../../components;../../helm
+    spec:
+      project: "{{ .cluster.name }}-project"
+      source:
+        repoURL: https://gitlab.example.com/k8s-gitops.git
+        targetRevision: HEAD
+        path: "apps/{{ .name }}/clusters/{{ .cluster.name }}"
+        plugin:
+          env:
+            - name: AVP_SECRET
+              value: vault-config
+      destination:
+        server: "{{ .cluster.address }}"
+        namespace: "{{ .namespace }}"
+  templatePatch: |
+    {{- if .annotations }}
+    metadata:
+      annotations:
+        {{- range $key, $value := .annotations }}
+        {{ $key  }}: "{{ $value }}"
+        {{- end }}
+    {{- end}}
+    spec:
+      syncPolicy:
+        {{- if .autoSync }}
+        automated:
+          prune: {{ default "true" .prune }}
+          selfHeal: {{ default "true" .selfHeal }}
+        {{- end }}
+        managedNamespaceMetadata:
+          labels:
+            app.kubernetes.io/managed-by: argocd
+        syncOptions:
+          - CreateNamespace=true
+        {{- range $syncOptions := .syncOptions }}
+          - {{ $syncOptions }}
+        {{- end }}
+      {{- if .ignoreDifferences }}
+      ignoreDifferences:
+        {{ .ignoreDifferences | toYaml | nindent 4 }}
+      {{- end }}

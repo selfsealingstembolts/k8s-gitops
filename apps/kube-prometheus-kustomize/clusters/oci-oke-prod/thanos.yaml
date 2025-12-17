@@ -1,0 +1,10 @@
+---
+type: s3
+config:
+  bucket: thanos
+  endpoint: s3.k8s.example.com:9000
+  access_key: thanos
+  secret_key: "" 
+  insecure: false
+  http_config:
+    insecure_skip_verify: true

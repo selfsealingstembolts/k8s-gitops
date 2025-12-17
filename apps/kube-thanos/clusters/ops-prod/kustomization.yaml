@@ -1,0 +1,43 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: thanos
+
+resources:
+  - ../../base
+  - ../../components/thanos-query-tls
+
+components:
+  - ../../components/thanos-query
+  - ../../components/thanos-query-frontend
+  - ../../components/thanos-store
+  - ../../components/thanos-compact
+
+secretGenerator:
+  - name: thanos-objectstorage
+    behavior: replace
+    files:
+      - thanos.yaml
+
+patches:
+  - target:
+      name: thanos-compact
+      kind: StatefulSet
+    path: compact.yaml
+  - target:
+      name: thanos-query
+      kind: Deployment
+    path: query.yaml
+  - target:
+      name: thanos-query-tls
+      kind: Deployment
+    path: query-tls.yaml
+  - target:
+      name: thanos-query-frontend
+      kind: Deployment
+    path: query-frontend.yaml
+  - target:
+      name: thanos-store
+      kind: StatefulSet
+    path: store.yaml

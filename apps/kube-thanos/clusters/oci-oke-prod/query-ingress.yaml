@@ -1,0 +1,29 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thanos-query
+  annotations:
+    cert-manager.io/cluster-issuer: vault-issuer
+    cert-manager.io/common-name: thanos-query.oci.example.com
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+  labels:
+    app.kubernetes.io/instance: thanos-query
+spec:
+  ingressClassName: ingress-nginx-private
+  rules:
+    - host: thanos-query.oci.example.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: thanos-query
+                port:
+                  name: grpc
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - thanos-query.oci.example.com
+      secretName: thanos-query-ingress

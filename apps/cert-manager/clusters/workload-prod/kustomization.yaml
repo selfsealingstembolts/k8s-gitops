@@ -1,0 +1,12 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - clusterissuer.yaml
+
+components:
+  - ../../components/freeipa-acme-issuer
+  - ../../components/vault-secretless
+  - ../../components/metrics

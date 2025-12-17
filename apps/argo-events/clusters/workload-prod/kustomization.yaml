@@ -1,0 +1,66 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+components:
+  - ../../components/event-sources-webhook-gitea
+  - ../../components/sensors-git-ci-container
+  - ../../components/metrics
+
+patches:
+  - target:
+      name: default
+      kind: EventBus
+    patch: |-
+      - op: add
+        path: "/spec/jetstream/persistence"
+        value:
+          persistence:
+            storageClassName: truenas-iscsi-csi
+            accessMode: ReadWriteOnce
+            volumeSize: 10Gi
+      - op: add
+        path: "/spec/jetstream/streamConfig"
+        value: |
+          maxAge: 24h
+      - op: add
+        path: "/spec/jetstream/settings"
+        value: |
+          max_file_store: 1GB
+      - op: add
+        path: "/spec/jetstream/startArgs"
+        value:
+          - "-D"
+        
+      # apiVersion: argoproj.io/v1alpha1
+      # kind: EventBus
+      # metadata:
+      #   name: jetstream
+      # spec:
+      #   jetstream
+      #     replicas: 1
+      #     persistence:
+      #       storageClassName: truenas-iscsi-csi
+      #       accessMode: ReadWriteOnce
+      #       volumeSize: 10Gi
+      #     streamConfig: |
+      #       maxAge: 24h
+      #     settings: |
+      #       max_file_store: 1GB
+      #     startArgs:
+      #       - "-D"
+
+  - target:
+      name: eventsource-webhook-gitea
+      kind: Service
+    patch: |-
+      - op: add
+        path: "/metadata/annotations"
+        value:
+          external-dns.alpha.kubernetes.io/hostname: "events.k8s.example.com"
+      - op: replace
+        path: "/spec/type"
+        value: LoadBalancer

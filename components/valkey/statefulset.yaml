@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: valkey
+spec:
+  serviceName: valkey-headless
+  replicas: 1
+  template:
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: valkey
+          image: valkey/valkey:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - /conf/valkey.conf
+          ports:
+          - name: client
+            containerPort: 6379
+            protocol: TCP
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: valkey-data
+              mountPath: /data
+            - name: config
+              mountPath: /conf
+            - name: password
+              mountPath: /secret
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - valkey-cli
+                - ping
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: valkey-config
+        - name: password
+          secret:
+            secretName: valkey-secret
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: valkey-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "default"
+        resources:
+          requests:
+            storage: 1Gi

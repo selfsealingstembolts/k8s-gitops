@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: avp-cmp-config
+data:
+  avp-kustomize.yaml: |
+    ---
+    apiVersion: argoproj.io/v1alpha1
+    kind: ConfigManagementPlugin
+    metadata:
+      name: argocd-vault-plugin-kustomize
+    spec:
+      allowConcurrency: true
+      # Note: this command is run _before_ anything is done, therefore the logic is to check
+      # if this looks like a Kustomize bundle
+      discover:
+        find:
+          command:
+            - find
+            - "."
+            - -name
+            - kustomization.yaml
+      generate:
+        command:
+          - bash
+          - "-c"
+          - |
+            #!/usr/bin/env bash
+            set -eo pipefail
+            kustomize build --enable-helm . | argocd-vault-plugin generate - -s "${ARGOCD_ENV_AVP_SECRET}"
+      lockRepo: false

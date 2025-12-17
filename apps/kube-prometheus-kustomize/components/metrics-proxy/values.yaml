@@ -1,0 +1,24 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kube-prometheus-chart
+valuesInline:
+  kubeControllerManager:
+    enabled: true
+    service:
+      enabled: true
+      port: 10252
+      targetPort: 10252
+    serviceMonitor:
+      enabled: true
+      https: false
+  kubeScheduler:
+    enabled: true
+    service:
+      enabled: true
+      port: 10251
+      targetPort: 10251
+    serviceMonitor:
+      enabled: true
+      https: false

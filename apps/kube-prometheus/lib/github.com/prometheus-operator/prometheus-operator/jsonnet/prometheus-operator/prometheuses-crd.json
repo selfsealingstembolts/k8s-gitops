@@ -1,0 +1,7 @@
+(import "../../../../../../vendor/prometheus-operator/prometheuses-crd.json") + {
+    metadata+: {
+        annotations+: {
+            'argocd.argoproj.io/sync-options': "ServerSideApply=true",
+        }
+    }
+}

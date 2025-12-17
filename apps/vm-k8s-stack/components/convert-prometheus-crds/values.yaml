@@ -1,0 +1,18 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: victoria-metrics-k8s-stack-chart
+valuesInline:
+  victoria-metrics-operator:
+    operator:
+      # -- By default, operator converts prometheus-operator objects.
+      disable_prometheus_converter: false
+      # -- Compare-options and sync-options for prometheus objects converted by operator for properly use with ArgoCD
+      prometheus_converter_add_argocd_ignore_annotations: true
+      # -- Enables ownership reference for converted prometheus-operator objects,
+      # it will remove corresponding victoria-metrics objects in case of deletion prometheus one.
+      enable_converter_ownership: true
+      # -- Enables custom config-reloader, bundled with operator.
+      # It should reduce  vmagent and vmauth config sync-time and make it predictable.
+      useCustomConfigReloader: true

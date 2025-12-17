@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argo-workflows
+  annotations:
+    # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
+    ingress.kubernetes.io/proxy-body-size: 100M
+    ingress.kubernetes.io/app-root: "/"
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+spec:
+  rules:
+    - host: ""
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: argo-server
+                port:
+                  number: 2746
+  tls:
+    - hosts:
+        - ""
+      secretName: argo-workflows-tls

@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+
+configMapGenerator:
+  - name: vector-aggregator-config
+    files:
+      - aggregator.yaml
+
+images:
+  - name: docker.io/timberio/vector
+    newTag: 0.51.1-distroless-libc
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: vector
+      app.kubernetes.io/instance: vector
+      app.kubernetes.io/component: aggregator
+    includeSelectors: true
+    includeTemplates: true

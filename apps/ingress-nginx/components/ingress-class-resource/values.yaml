@@ -1,0 +1,11 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: ingress-nginx-chart
+valuesInline:
+  controller:
+    ingressClassResource:
+      name: nginx
+      enabled: true
+      default: true

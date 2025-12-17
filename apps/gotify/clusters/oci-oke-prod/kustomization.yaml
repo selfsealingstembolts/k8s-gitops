@@ -1,0 +1,44 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: gotify
+
+resources:
+  - ../../base
+
+images:
+  - name: gotify/server
+    newName: gotify/server-arm64
+
+patches:
+  - target:
+      kind: Ingress
+      name: gotify
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: letsencrypt-prod-issuer
+      - op: replace
+        path: "/spec/tls/0/hosts/0"
+        value: notify.example.com
+      - op: replace
+        path: /spec/rules/0/host
+        value: notify.example.com
+      - op: replace
+        path: "/spec/ingressClassName"
+        value: ingress-nginx-public
+
+  - target:
+      kind: PersistentVolumeClaim
+      name: gotify-data
+    patch: |-
+      - op: replace
+        path: "/spec/storageClassName"
+        value: longhorn
+      - op: replace
+        path: "/spec/accessModes/0"
+        value: ReadWriteOnce
+      - op: replace
+        path: "/spec/resources/requests/storage"
+        value: 1Gi

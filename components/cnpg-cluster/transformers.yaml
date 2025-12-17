@@ -1,0 +1,49 @@
+---
+nameReference:
+  - kind: Secret
+    version: v1
+    fieldSpecs:
+      - path: spec/bootstrap/initdb/secret/name
+        kind: Cluster
+      - path: spec/backup/barmanObjectStore/s3Credentials/accessKeyId/name
+        kind: Cluster
+      - path: spec/backup/barmanObjectStore/s3Credentials/secretAccessKey/name
+        kind: Cluster
+      - path: spec/configuration/s3Credentials/accessKeyId/name
+        kind: ObjectStore
+      - path: spec/configuration/s3Credentials/secretAccessKey/name
+        kind: ObjectStore
+
+namePrefix:
+  - path: spec/bootstrap/initdb/secret/name
+    kind: Cluster
+  - path: spec/cluster/name
+    kind: ScheduledBackup
+  - path: spec/plugins/parameters/barmanObjectName
+    kind: Cluster
+  - path: spec/externalClusters/plugin/parameters/barmanObjectName
+    kind: Cluster
+  - path: spec/externalClusters/plugin/parameters/serverName
+    kind: Cluster
+  - path: spec/configuration/s3Credentials/accessKeyId/name
+    kind: ObjectStore
+  - path: spec/configuration/s3Credentials/secretAccessKey/name
+    kind: ObjectStore
+  - path: spec/target/name
+    kind: ExternalSecret
+  - path: spec/selector/secret/name
+    kind: PushSecret
+  - path: spec/data/sourceRef/storeRef/name
+    kind: ExternalSecret
+
+images:
+  - path: spec/imageName
+    kind: Cluster
+
+labels:
+  - path: spec/inheritedMetadata/labels
+    create: true
+    kind: Cluster
+  - path: spec/target/template/metadata/labels
+    create: true
+    kind: ExternalSecret

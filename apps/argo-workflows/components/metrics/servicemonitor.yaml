@@ -1,0 +1,14 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argo-workflows-monitor
+  labels:
+    app: workflow-controller
+spec:
+  jobLabel: app
+  endpoints:
+  - port: metrics
+  selector:
+    matchLabels:
+      app: workflow-controller

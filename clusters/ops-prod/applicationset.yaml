@@ -1,0 +1,258 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ops-prod-generator
+spec:
+  goTemplate: true
+  generators:
+  - matrix:
+      generators:
+      - git:
+          repoURL: https://gitlab.example.com/k8s-gitops.git
+          revision: HEAD
+          files:
+          - path: clusters/ops-prod/config.yaml
+
+      - list:
+          elements:
+          - name: cert-manager
+            namespace: cert-manager
+            autoSync: true
+          - name: trust-manager
+            namespace: cert-manager
+            autoSync: true
+          - name: cilium
+            namespace: kube-system
+            autoSync: false
+            ignoreDifferences:
+              - group: ""
+                kind: ConfigMap
+                name: hubble-ca-cert
+                jsonPointers:
+                  - /data/ca.crt
+              - group: ""
+                kind: Secret
+                name: hubble-relay-client-certs
+                jsonPointers:
+                  - /data/ca.crt
+                  - /data/tls.crt
+                  - /data/tls.key
+              - group: ""
+                kind: Secret
+                name: hubble-server-certs
+                jsonPointers:
+                  - /data/ca.crt
+                  - /data/tls.crt
+                  - /data/tls.key
+          - name: external-dns
+            namespace: external-dns
+            autoSync: true
+          - name: ingress-nginx
+            namespace: ingress-nginx
+            autoSync: true
+          - name: democratic-csi
+            namespace: democratic-csi
+            autoSync: true
+          - name: external-snapshotter
+            namespace: kube-system
+            autoSync: true
+          - name: velero
+            namespace: velero
+            autoSync: true
+          - name: cloudnative-pg
+            namespace: cnpg-system
+            autoSync: false
+            syncOptions:
+              - ServerSideApply=true
+            annotations:
+              argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
+          - name: external-secrets
+            namespace: external-secrets
+            autoSync: true
+            syncOptions:
+              - ServerSideApply=true
+            annotations:
+              argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
+          # - name: kyverno
+          #   namespace: kyverno
+          #   autoSync: true
+          #   syncOptions:
+          #     - ServerSideApply=true
+          #   annotations:
+          #     argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
+
+          - name: gitea
+            namespace: gitea
+            autoSync: false
+          - name: gitlab
+            namespace: gitlab-system
+            autoSync: false
+          # - name: gitlab-runner
+          #   namespace: gitlab-runner
+          #   autoSync: true
+          - name: keycloak
+            namespace: keycloak
+            autoSync: false
+          - name: vault
+            namespace: vault
+            autoSync: false
+          - name: vault-secrets-operator
+            namespace: vault-secrets-operator-system
+            autoSync: true
+          - name: awx
+            namespace: awx
+            autoSync: true
+          - name: redis
+            namespace: redis
+            autoSync: true
+          - name: minio
+            namespace: minio-operator
+            autoSync: true
+          - name: netbox
+            namespace: netbox
+            autoSync: true
+
+          - name: metrics-proxy
+            namespace: kube-system
+            autoSync: true
+          - name: grafana-operator
+            namespace: grafana
+            autoSync: true
+            syncOptions:
+              - ServerSideApply=true
+            annotations:
+              argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
+          - name: monitoring
+            namespace: monitoring
+            autoSync: true
+          - name: vm-k8s-stack
+            namespace: victoriametrics
+            autoSync: true
+            syncOptions:
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: ""
+                kind: Secret
+                name: vm-stack-victoria-metrics-operator-validation
+                namespace: victoriametrics
+                jsonPointers:
+                  - /data
+              - group: admissionregistration.k8s.io
+                kind: ValidatingWebhookConfiguration
+                name: vm-stack-victoria-metrics-operator-admission
+                jqPathExpressions:
+                  - '.webhooks[]?.clientConfig.caBundle'
+          - name: vector
+            namespace: vector
+            autoSync: true
+
+          - name: harbor-helm
+            namespace: harbor
+            autoSync: false
+            ignoreDifferences:
+              - group: ""
+                kind: Secret
+                name: harbor-core
+                jsonPointers:
+                  - /data/CSRF_KEY
+                  - /data/secret
+                  - /data/tls.crt
+                  - /data/tls.key
+              - group: ""
+                kind: Secret
+                name: harbor-jobservice
+                jsonPointers:
+                  - /data/JOBSERVICE_SECRET
+              - group: ""
+                kind: Secret
+                name: harbor-notary-server
+                jsonPointers:
+                  - /data/ca.crt
+                  - /data/tls.crt
+                  - /data/tls.key
+              - group: ""
+                kind: Secret
+                name: harbor-registry
+                jsonPointers:
+                  - /data/REGISTRY_HTTP_SECRET
+              - group: ""
+                kind: Secret
+                name: harbor-registry-htpasswd
+                jsonPointers:
+                  - /data/REGISTRY_HTPASSWD
+              - group: apps
+                kind: Deployment
+                namespace: harbor
+                jsonPointers:
+                  - /spec/template/metadata/annotations/checksum~1secret
+                  - /spec/template/metadata/annotations/checksum~1secret-core
+                  - /spec/template/metadata/annotations/checksum~1secret-jobservice
+          - name: renovate-ce
+            namespace: renovate-ce
+            autoSync: true
+          - name: registry
+            namespace: registry
+            autoSync: true
+
+          # dashboards, rules, and scrape targets
+          - name: argo-workflows
+            namespace: grafana
+            autoSync: true
+          - name: homeassistant
+            namespace: homeassistant
+            autoSync: true
+
+  ignoreApplicationDifferences:
+    - jsonPointers:
+        # Allow automated sync policy to be disabled manually.
+        - /spec/syncPolicy/automated
+        # Allow target revision to be set manually for PR testing,
+        - /spec/source/targetRevision
+
+  template:
+    metadata:
+      name: "{{ .cluster.name }}-{{ .name }}"
+      annotations:
+        argocd.argoproj.io/manifest-generate-paths: .;../../base;../../components;../../helm
+    spec:
+      project: "{{ .cluster.name }}-project"
+      source:
+        repoURL: https://gitlab.example.com/k8s-gitops.git
+        targetRevision: HEAD
+        path: "apps/{{ .name }}/clusters/{{ .cluster.name }}"
+        plugin:
+          env:
+            - name: AVP_SECRET
+              value: vault-config
+      destination:
+        server: "{{ .cluster.address }}"
+        namespace: "{{ .namespace }}"
+  templatePatch: |
+    {{- if .annotations }}
+    metadata:
+      annotations:
+        {{- range $key, $value := .annotations }}
+        {{ $key  }}: "{{ $value }}"
+        {{- end }}
+    {{- end}}
+    spec:
+      syncPolicy:
+        {{- if .autoSync }}
+        automated:
+          prune: {{ default "true" .prune }}
+          selfHeal: {{ default "true" .selfHeal }}
+        {{- end }}
+        managedNamespaceMetadata:
+          labels:
+            app.kubernetes.io/managed-by: argocd
+        syncOptions:
+          - CreateNamespace=true
+        {{- range $syncOptions := .syncOptions }}
+          - {{ $syncOptions }}
+        {{- end }}
+      {{- if .ignoreDifferences }}
+      ignoreDifferences:
+        {{ .ignoreDifferences | toYaml | nindent 4 }}
+      {{- end }}

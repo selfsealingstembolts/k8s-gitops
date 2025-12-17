@@ -1,0 +1,9 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - https://raw.githubusercontent.com/thanos-io/kube-thanos/v0.29.0/examples/all/manifests/thanos-query-frontend-deployment.yaml
+  - https://raw.githubusercontent.com/thanos-io/kube-thanos/v0.29.0/examples/all/manifests/thanos-query-frontend-service.yaml
+  - https://raw.githubusercontent.com/thanos-io/kube-thanos/v0.29.0/examples/all/manifests/thanos-query-frontend-serviceAccount.yaml
+  - https://raw.githubusercontent.com/thanos-io/kube-thanos/v0.29.0/examples/all/manifests/thanos-query-frontend-serviceMonitor.yaml

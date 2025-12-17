@@ -1,0 +1,15 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: argo-workflows
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  datasources:
+    - inputName: "DS_THANOS-MASTER"
+      datasourceName: "prometheus"
+  folder: "Argo Workflows"
+  grafanaCom:
+    id: 13927

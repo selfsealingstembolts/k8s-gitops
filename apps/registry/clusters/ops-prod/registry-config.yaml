@@ -1,0 +1,33 @@
+---
+version: 0.1
+storage:
+  s3:
+    accesskey: awsaccesskey
+    secretkey: awssecretkey
+    region: us-east-1
+    regionendpoint: https://s3.k8s.example.com
+    forcepathstyle: true
+    bucket: docker-registry
+    secure: true
+    skipverify: true
+  delete:
+    enabled: true
+  cache:
+    blobdescriptor: redis
+    blobdescriptorsize: 10000
+http:
+  addr: :5000
+  host: https://docker-registry.k8s.example.com
+  secret: asecretforlocaldevelopment
+  debug:
+    addr: :5001
+    prometheus:
+      enabled: true
+      path: /metrics
+redis:
+  addrs:
+    - redis.redis.svc.cluster.local:6379
+proxy:
+  remoteurl: https://registry-1.docker.io
+  username: docker
+  password: docker

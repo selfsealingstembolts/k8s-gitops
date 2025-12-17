@@ -1,0 +1,43 @@
+---
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: gitlab-runner
+
+generators:
+  - ./helm
+  - ./helm-buildah
+
+secretGenerator:
+  - name: gitlab-custom-ca
+    files:
+      - gitlab.k8s.example.com.crt=secrets/ca.crt
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/common/custom-ca"
+
+  - name: gitlab-runner-secret
+    envs:
+      - secrets/gitlab-runner-secret.env
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/ops-prod/gitlab-runner"
+
+  - name: buildah-gitlab-runner-secret
+    envs:
+      - secrets/buildah-gitlab-runner-secret.env
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/ops-prod/gitlab-runner"
+
+  - name: gitlab-runner-cache-secret
+    envs:
+      - secrets/gitlab-runner-cache-secret.env
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/ops-prod/gitlab-runner"

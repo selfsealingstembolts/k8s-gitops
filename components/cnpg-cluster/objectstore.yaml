@@ -1,0 +1,24 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: cnpg-minio
+spec:
+  configuration:
+    destinationPath: "s3://cnpg-backup/%CLUSTER%/%APP%"
+    endpointURL: "https://s3.example.com"
+    endpointCA:
+      name: ca-bundle
+      key: ca.crt
+    s3Credentials:
+      accessKeyId:
+        name: cnpg-secret
+        key: accessKey
+      secretAccessKey:
+        name: cnpg-secret
+        key: secretKey
+    wal:
+      compression: bzip2
+    data:
+      compression: bzip2
+  retentionPolicy: "30d"

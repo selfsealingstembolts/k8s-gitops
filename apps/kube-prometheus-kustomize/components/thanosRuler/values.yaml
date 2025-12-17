@@ -1,0 +1,31 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kube-prometheus-chart
+valuesInline:
+
+  ## Configuration for thanosRuler
+  ## ref: https://thanos.io/tip/components/rule.md/
+  ##
+  thanosRuler:
+
+    ## Deploy thanosRuler
+    ##
+    enabled: true
+
+    ingress:
+      enabled: false
+      paths:
+        - /
+      pathType: Prefix
+
+    ## Settings affecting thanosRulerpec
+    ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#thanosrulerspec
+    ##
+    thanosRulerSpec:
+      ## If true, a nil or {} value for thanosRuler.thanosRulerSpec.ruleSelector will cause the
+      ## prometheus resource to be created with selectors based on values in the helm deployment,
+      ## which will also match the PrometheusRule resources created
+      ##
+      rulesSelectorNilUseHelmValues: false

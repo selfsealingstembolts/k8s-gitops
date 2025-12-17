@@ -1,0 +1,15 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:update-externalsecrets
+  labels:
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
+rules:
+- apiGroups:
+  - "external-secrets.io"
+  resources:
+  - "externalsecrets"
+  verbs:
+  - "update"
+  - "patch"

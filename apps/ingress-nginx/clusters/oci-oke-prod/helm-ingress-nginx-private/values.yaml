@@ -1,0 +1,24 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: ingress-nginx-chart
+releaseName: ingress-nginx-private
+valuesInline:
+  controller:
+    service:
+      externalTrafficPolicy: "Local"
+      annotations:
+        oci.oraclecloud.com/load-balancer-type: "nlb"
+        oci-network-load-balancer.oraclecloud.com/internal: "true"
+        oci-network-load-balancer.oraclecloud.com/subnet: ""
+        oci-network-load-balancer.oraclecloud.com/oci-network-security-groups: ""
+    ingressClassResource:
+      name: "ingress-nginx-private"
+      enabled: true
+      default: false
+      controllerValue: "k8s.io/ingress-nginx-private"
+    publishService:
+      enabled: true
+    # extraArgs:
+    #   report-node-internal-ip-address: ""

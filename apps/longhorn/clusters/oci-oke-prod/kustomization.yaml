@@ -1,0 +1,28 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: longhorn-system
+
+generators:
+  - ./helm
+
+secretGenerator:
+  - name: longhorn-oci-s3-key
+    envs:
+      - secrets/oci.env
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/oci-oke-prod/longhorn"
+
+patches:
+  - target:
+      name: longhorn-ingress
+      kind: Ingress
+    patch: |-
+      - op: add
+        path: "/metadata/annotations"
+        value:
+          cert-manager.io/cluster-issuer: vault-issuer
+          cert-manager.io/common-name: longhorn.oci.example.com

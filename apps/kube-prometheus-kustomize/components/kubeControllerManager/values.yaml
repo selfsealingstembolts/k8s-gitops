@@ -1,0 +1,11 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kube-prometheus-chart
+valuesInline:
+
+  ## Component scraping the kube controller manager
+  ##
+  kubeControllerManager:
+    enabled: true

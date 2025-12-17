@@ -1,0 +1,15 @@
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: vault-oci-auth
+spec:
+  vaultConnectionRef: vault-secrets-operator-system/vault-oci-connection
+  vaultAuthGlobalRef:
+    allowDefault: true
+  allowedNamespaces:
+    - vault
+  mount: kubernetes
+  kubernetes:
+    role: vso-autounseal-token
+    serviceAccount: vso

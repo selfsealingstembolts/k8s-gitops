@@ -1,0 +1,29 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: democratic-csi
+
+generators:
+  - ./helm-iscsi
+  - ./helm-nfs
+  - ./helm-iscsi-slow
+
+secretGenerator:
+  - name: democratic-csi-driver-config-iscsi
+    files:
+      - driver-config-file.yaml=driver-config-iscsi.yaml
+    options:
+      disableNameSuffixHash: true
+
+  - name: democratic-csi-driver-config-nfs
+    files:
+      - driver-config-file.yaml=driver-config-nfs.yaml
+    options:
+      disableNameSuffixHash: true
+
+  - name: democratic-csi-driver-config-iscsi-slow
+    files:
+      - driver-config-file.yaml=driver-config-iscsi-slow.yaml
+    options:
+      disableNameSuffixHash: true

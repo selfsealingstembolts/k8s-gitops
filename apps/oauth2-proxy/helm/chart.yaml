@@ -1,0 +1,15 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: oauth2-proxy-chart
+name: oauth2-proxy
+repo: https://oauth2-proxy.github.io/manifests
+version: 9.0.1
+releaseName: oauth2-proxy
+namespace: oauth2-proxy
+includeCRDs: false
+valuesInline:
+  config:
+    existingSecret: oauth-client-secret
+    existingConfig: oauth2-proxy-config

@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - cronjob.yaml
+  - pvc.yaml
+
+configMapGenerator:
+  - name: renovate-config
+    files:
+      - config.json
+
+secretGenerator:
+  - name: renovate-secret
+    envs:
+      - secrets/secret.env
+
+images:
+  - name: renovate/renovate
+    newName: harbor.k8s.example.com/local/renovate
+    newTag: 42.58.3

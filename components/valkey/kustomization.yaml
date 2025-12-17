@@ -1,0 +1,28 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - service.yaml
+  - statefulset.yaml
+  - externalsecret.yaml
+  - pushsecret.yaml
+
+configurations:
+  - transformers.yaml
+
+configMapGenerator:
+  - name: valkey-config
+    files:
+      - valkey.conf
+
+images:
+  - name: valkey/valkey
+    newTag: 8.1.4
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: valkey
+      app.kubernetes.io/component: valkey
+    includeTemplates: true
+    includeSelectors: true

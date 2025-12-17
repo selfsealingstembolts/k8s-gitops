@@ -1,0 +1,11 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: trust-manager-chart
+name: trust-manager
+repo: https://charts.jetstack.io
+version: v0.20.2
+releaseName: trust-manager
+namespace: cert-manager
+includeCRDs: true

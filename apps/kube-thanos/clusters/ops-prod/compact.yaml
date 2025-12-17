@@ -1,0 +1,27 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-compact
+spec:
+  template:
+    spec:
+      containers:
+        - name: thanos-compact
+          args:
+            - compact
+            - --wait
+            - --log.level=info
+            - --log.format=logfmt
+            - --objstore.config=$(OBJSTORE_CONFIG)
+            - --data-dir=/var/thanos/compact
+            - --debug.accept-malformed-index
+            - --retention.resolution-raw=0d
+            - --retention.resolution-5m=0d
+            - --retention.resolution-1h=0d
+            - --delete-delay=48h
+            - --compact.concurrency=1
+            - --downsample.concurrency=1
+            - --downsampling.disable
+            - --deduplication.replica-label=prometheus_replica
+            - --deduplication.replica-label=rule_replica

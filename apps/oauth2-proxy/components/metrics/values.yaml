@@ -1,0 +1,10 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: oauth2-proxy-chart
+valuesInline:
+ metrics:
+   enabled: true
+   serviceMonitor:
+     enabled: true

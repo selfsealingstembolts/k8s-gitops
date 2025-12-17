@@ -1,0 +1,19 @@
+
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-chart
+valuesInline:
+  server:
+    annotations:
+      vault.hashicorp.com/agent-inject: "true"
+      vault.hashicorp.com/agent-run-as-initcontainer: "true"
+      vault.hashicorp.com/role: "vault-injector-autounseal"
+      vault.hashicorp.com/agent-auth-path: "auth/kubernetes"
+      vault.hashicorp.com/agent-vault-addr: "https://vault.example.com"
+
+      vault.hashicorp.com/agent-inject-secret-transit-token: "auth/token/create"
+      vault.hashicorp.com/agent-inject-template-transit-token: |
+        {{- with secret "auth/token/create-orphan" "policies=autounseal" "period=24h" -}}
+        export VAULT_TOKEN="{{ .Auth.ClientToken }}"
+        {{- end }}

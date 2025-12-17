@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vm-stack-graphite-listener
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: graphite.example.com
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 2003
+      targetPort: 2003
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/instance: vm-stack
+    app.kubernetes.io/name: vmsingle
+    managed-by: vm-operator

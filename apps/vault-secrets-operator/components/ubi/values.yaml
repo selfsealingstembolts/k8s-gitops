@@ -1,0 +1,11 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-secrets-operator-chart
+valuesInline:
+  controller:
+    manager:
+      image:
+        repository: registry.connect.redhat.com/hashicorp/vault-secrets-operator
+        tag: 1.0.1-ubi

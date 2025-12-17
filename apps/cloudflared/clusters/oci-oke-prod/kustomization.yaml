@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ingress-nginx
+
+resources:
+  - ../../base
+
+components:
+  - ../../components/metrics
+
+configMapGenerator:
+  - name: cloudflared-config
+    files:
+      - config.yaml=cloudflared-config.yaml
+
+secretGenerator:
+  - name: cloudflared-creds
+    files:
+      - credentials.json=secrets/creds.json
+    options:
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/oci-oke-prod/cloudflared"

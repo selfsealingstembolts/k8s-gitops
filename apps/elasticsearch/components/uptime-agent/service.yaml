@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uptime-agent-svc
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: uptime-agent.k8s.example.com
+spec:
+  ports:
+    - port: 9001
+      protocol: UDP
+      targetPort: 9001
+  selector:
+    agent.k8s.elastic.co/name: uptime-agent
+  type: LoadBalancer

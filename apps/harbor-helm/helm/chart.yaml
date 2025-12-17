@@ -1,0 +1,16 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: harbor-chart
+name: harbor
+repo: https://helm.goharbor.io
+version: 1.17.2
+releaseName: harbor
+namespace: harbor
+includeCRDs: true
+valuesInline:
+  internalTLS:
+    enabled: false
+  existingSecretAdminPassword: harbor-admin-secret
+  existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD

@@ -1,0 +1,66 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: grafana
+
+resources:
+  - ../../base
+
+components:
+  - ../../components/keycloak-sso
+  - ../../components/metrics
+  - ../../components/victorialogs-datasource
+
+secretGenerator:
+  - name: grafana-admin-creds
+    behavior: replace
+    envs:
+      - secrets/grafana-admin-creds.env
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/ops-prod/grafana"
+
+patches:
+  - target:
+      kind: Grafana
+      name: grafana
+    patch: |-
+      - op: add
+        path: "/spec/ingress/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: vault-issuer
+      - op: add
+        path: "/spec/ingress/metadata/annotations/cert-manager.io~1common-name"
+        value: grafana.k8s.example.com
+      - op: replace
+        path: "/spec/ingress/spec/ingressClassName"
+        value: nginx
+      - op: replace
+        path: "/spec/ingress/spec/tls/0/hosts/0"
+        value: grafana.k8s.example.com
+      - op: replace
+        path: "/spec/ingress/spec/tls/0/secretName"
+        value: grafana-tls-ingress
+      - op: replace
+        path: "/spec/ingress/spec/rules/0/host"
+        value: grafana.k8s.example.com
+      - op: replace
+        path: "/spec/config/server/root_url"
+        value: https://grafana.k8s.example.com
+      - op: replace
+        path: "/spec/config/auth.generic_oauth/auth_url"
+        value: "https://keycloak.k8s.example.com/realms/example/protocol/openid-connect/auth"
+      - op: replace
+        path: "/spec/config/auth.generic_oauth/token_url"
+        value: "https://keycloak.k8s.example.com/realms/example/protocol/openid-connect/token"
+      - op: replace
+        path: "/spec/config/auth.generic_oauth/api_url"
+        value: "https://keycloak.k8s.example.com/realms/example/protocol/openid-connect/userinfo"
+  - target:
+      kind: GrafanaDashboard
+      name: k8s-*
+    patch: |-
+      - op: replace
+        path: "/spec/datasources/0/datasourceName"
+        value: "VictoriaMetrics"

@@ -1,0 +1,62 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ci-container
+  annotations:
+    workflows.argoproj.io/description: >-
+      A workflow implementing a CI pipeline for building containers.
+
+      The tasks performed are as follows:
+        - clone a specified git repo
+        - parse the CI config in the repo
+        - build a container using the constructed arguments from the parse stage
+        - push the resultant image to a registry
+spec:
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: revision
+        value: "main"
+      - name: config_filename
+        value: ".argo-ci.yaml"
+      - name: path
+        value: "/src"
+      - name: git-secret
+        value: "argo-workflows-kaniko-secret"
+      - name: payload
+        value: '{"key": "value"}'
+      - name: registry-auth-secret
+        value: "argo-workflows-harbor-secret"
+      - name: ca-bundle-configmap
+        value: "freeipa-bundle"
+  templates:
+  - name: main
+    dag:
+      tasks:
+        - name: clone
+          templateRef:
+            name: clone-repo
+            template: clone
+        - name: parse
+          templateRef:
+            name: parse-config
+            template: parse
+          arguments:
+            artifacts:
+              - name: source
+                from: "{{tasks.clone.outputs.artifacts.source}}"
+          dependencies: [clone]
+        - name: build
+          templateRef:
+            name: build-container
+            template: build
+          arguments:
+            parameters:
+              - name: args
+                value: "{{item}}"
+            artifacts:
+              - name: source
+                from: "{{tasks.clone.outputs.artifacts.source}}"
+          withParam: "{{tasks.parse.outputs.result}}"
+          dependencies: [parse]

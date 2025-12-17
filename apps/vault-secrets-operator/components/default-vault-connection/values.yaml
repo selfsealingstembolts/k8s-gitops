@@ -1,0 +1,40 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-secrets-operator-chart
+valuesInline:
+  # Configures the default VaultConnection CR which will be used by resources
+  # if they do not specify a VaultConnection reference. The name is 'default' and will
+  # always be installed in the same namespace as the operator.
+  # NOTE:
+  # * It is strongly recommended to deploy the vault secrets operator in a secure Vault environment
+  #   which includes a configuration utilizing TLS and installing Vault into its own restricted namespace.
+  defaultVaultConnection:
+    # toggles the deployment of the VaultAuthMethod CR
+    # @type: boolean
+    enabled: true
+
+    # Address of the Vault Server
+    # @type: string
+    # Example: http://vault.default.svc.cluster.local:8200
+    address: ""
+
+    # CACertSecret is the name of a Kubernetes secret containing the trusted PEM encoded CA certificate chain as `ca.crt`.
+    # Note: This secret must exist prior to deploying the CR.
+    # @type: string
+    caCertSecret: ""
+
+    # TLSServerName to use as the SNI host for TLS connections.
+    # @type: string
+    tlsServerName: ""
+
+    # SkipTLSVerify for TLS connections.
+    # @type: boolean
+    skipTLSVerify: false
+
+    # Headers to be included in all Vault requests.
+    # headers:
+    #   X-vault-something: "foo"
+    # @type: map
+    headers: {}

@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana
+  annotations:
+    nginx.ingress.kubernetes.io/secure-backends: "true"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+spec:
+  rules:
+    - host: "kibana.k8s.example.com"
+      http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: kibana-kb-http
+                port:
+                  name: https
+  tls:
+    - hosts:
+        - "kibana.k8s.example.com"
+      secretName: kibana-tls

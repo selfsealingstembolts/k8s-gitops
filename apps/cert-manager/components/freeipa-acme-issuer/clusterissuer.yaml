@@ -1,0 +1,22 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: freeipa-acme-issuer
+  namespace: cert-manager
+spec:
+  acme:
+    server: https://ipa0.idm.example.com/acme/directory
+    caBundle:
+      
+    privateKeySecretRef:
+      name: freeipa-acme-issuer-key
+    solvers:
+    - dns01:
+        rfc2136:
+          nameserver: 10.100.4.20:53
+          tsigKeyName: rndc-key
+          tsigAlgorithm: HMACSHA256
+          tsigSecretSecretRef:
+            name: tsig-secret
+            key: tsig-secret-key

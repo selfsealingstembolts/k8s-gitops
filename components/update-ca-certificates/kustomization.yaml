@@ -1,0 +1,32 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      name: .*
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: "/spec/template/spec/containers/0/lifecycle"
+        value:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "for f in /usr/local/share/ca-certificates/*.crt; do cat $f >> /etc/ssl/certs/ca-certificates.crt; done"]
+      - op: add
+        path: "/spec/template/spec/containers/0/volumeMounts/-"
+        value:
+          name: ca-bundles
+          mountPath: /usr/local/share/ca-certificates
+      - op: add
+        path: "/spec/template/spec/volumes/-"
+        value:
+          name: ca-bundles
+          projected:
+            defaultMode: 420
+            sources:
+              - configMap:
+                  name: ca-bundle
+                  items:
+                    - key: ca.crt
+                      path: ca.crt

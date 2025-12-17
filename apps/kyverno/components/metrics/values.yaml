@@ -1,0 +1,22 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kyverno-chart
+valuesInline:
+  grafana:
+    enabled: true
+    grafanaDashboard:
+      create: true
+  admissionController:
+    serviceMonitor:
+      enabled: true
+  backgroundController:
+    serviceMonitor:
+      enabled: true
+  cleanupController:
+    serviceMonitor:
+      enabled: true
+  reportsController:
+    serviceMonitor:
+      enabled: true

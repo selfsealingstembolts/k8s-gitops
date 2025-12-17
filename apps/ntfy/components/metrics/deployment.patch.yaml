@@ -1,0 +1,14 @@
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ntfy
+spec:
+  template:
+    spec:
+      containers:
+        - name: ntfy
+          ports:
+            - containerPort: 9090
+              name: http-metrics

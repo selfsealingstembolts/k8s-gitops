@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cnpg-tmpl
+data:
+  appName: ""
+  namespace: ""
+  templated: |
+    username: "{{ .appName }}"
+    password: "{{ .cnpgPassword }}"
+    pgpass: "{{ .appName }}-cnpg-cluster-rw:5432:{{ .appName }}:{{ .appName }}:{{ .cnpgPassword }}"
+    jdbc-uri: "jdbc:postgresql://{{ .appName }}-cnpg-cluster-rw.{{ .namespace }}:5432/{{ .appName }}?password={{ .cnpgPassword }}&user={{ .appName }}"
+    uri: "postgresql://{{ .appName }}:{{ .cnpgPassword }}@{{ .appName }}-cnpg-cluster-rw.{{ .namespace }}:5432/{{ .appName }}"
+    accessKey: "{{ .accessKey }}"
+    secretKey: "{{ .secretKey }}"

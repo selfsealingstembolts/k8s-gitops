@@ -1,0 +1,47 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: argo-events
+spec:
+  kubernetesSDConfigs:
+    - role: pod
+      selectors:
+        - role: pod
+          label: 'controller in (eventsource-controller,sensor-controller,eventbus-controller)'
+  relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_label_eventbus_name, __meta_kubernetes_pod_label_controller]
+      action: replace
+      regex: (.+);eventbus-controller
+      replacement: $1
+      targetLabel: 'eventbus_name'
+    - sourceLabels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_label_controller]
+      action: replace
+      regex: (.+);eventbus-controller
+      replacement: $1
+      targetLabel: 'namespace'
+    - sourceLabels: [__address__, __meta_kubernetes_pod_label_controller]
+      action: drop
+      regex: (.+):(\d222);eventbus-controller
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: argo-events-controllers
+spec:
+  kubernetesSDConfigs:
+    - role: pod
+      selectors:
+        - role: pod
+          label: 'app in (eventsource-controller,sensor-controller,eventbus-controller)'
+  relabelings:
+    - sourceLabels: [__address__, __meta_kubernetes_pod_label_app]
+      action: replace
+      regex: (.+);(eventsource-controller|sensor-controller|eventbus-controller)
+      replacement: $1:7777
+      targetLabel: '__address__'
+    - sourceLabels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_label_app]
+      action: replace
+      regex: (.+);(eventsource-controller|sensor-controller|eventbus-controller)
+      replacement: $1
+      targetLabel: 'namespace'

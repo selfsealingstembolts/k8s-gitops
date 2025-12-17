@@ -1,0 +1,57 @@
+---
+# service-test-ing.yml
+---  # Here we create a specific namespace to keep things clean
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: testing
+---  # We run a daemonset to deloy a whoami pod on each nodes
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: whoami-daemonset
+  namespace: testing
+spec:
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+        app: whoami
+    spec:
+      containers:
+      - name: whoami
+        image: traefik/whoami
+---  # Here we create a service to expose our pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: testing
+spec:
+  ports:
+  - name: http
+    targetPort: 80
+    port: 80
+  selector:
+    app: whoami
+---  # Here we define the ingress rule to route the traffic to the service
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: whoami-ingress
+  namespace: testing
+spec:
+  ingressClassName: nginx
+  rules:  # Rule definition
+  - host: whoami.k8s.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: whoami
+            port:
+              number: 80

@@ -1,0 +1,21 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: renovate-ce
+spec:
+  rules:
+    - host: "renovate-ce"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: renovate-ce
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - "renovate-ce"
+      secretName: renovate-ce-tls-ingress

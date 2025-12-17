@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - podmonitor.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: vector
+      app.kubernetes.io/instance: vector
+    includeSelectors: true
+    includeTemplates: true

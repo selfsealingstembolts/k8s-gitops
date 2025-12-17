@@ -1,0 +1,44 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      name: .*
+      kind: Deployment
+    # path: deployment.patch.yaml
+    patch: |-
+      - op: add
+        path: "/spec/template/spec/containers/0/volumeMounts/-"
+        value:
+          name: ca-certificates-crt
+          mountPath: /etc/ssl/certs/ca-certificates.crt
+          subPath: ca-certificates.crt
+          readOnly: true
+      - op: add
+        path: "/spec/template/spec/containers/0/volumeMounts/-"
+        value:
+          name: ca-crt
+          mountPath: /etc/ssl/certs/ca.crt
+          subPath: ca.crt
+          readOnly: true
+      - op: add
+        path: "/spec/template/spec/volumes/-"
+        value:
+          name: ca-certificates-crt
+          configMap:
+            name: ca-bundle
+            defaultMode: 444
+            items:
+              - key: ca.crt
+                path: ca-certificates.crt
+      - op: add
+        path: "/spec/template/spec/volumes/-"
+        value:
+          name: ca-crt
+          configMap:
+            name: ca-bundle
+            defaultMode: 444
+            items:
+              - key: ca.crt
+                path: ca.crt

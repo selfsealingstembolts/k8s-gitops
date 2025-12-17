@@ -1,0 +1,11 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: cilium-chart
+valuesInline:
+
+  hubble:
+    relay:
+      # -- Enable Hubble Relay (requires hubble.enabled=true)
+      enabled: true

@@ -1,0 +1,16 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: ntfy-monitor
+  labels:
+    app.kubernetes.io/name: ntfy
+    app.kubernetes.io/instance: ntfy
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ntfy
+      app.kubernetes.io/instance: ntfy
+  podMetricsEndpoints:
+    - port: http-metrics

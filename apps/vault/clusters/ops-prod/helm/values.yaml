@@ -1,0 +1,109 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-chart
+valuesInline:
+
+  server:
+
+    extraEnvironmentVars:
+      VAULT_TLS_SERVER_NAME: "vault.k8s.example.com"
+    extraSecretEnvironmentVars:
+      - envName: VAULT_TOKEN
+        secretName: vault-secret
+        secretKey: VAULT_TOKEN
+
+    dataStorage:
+      size: 10Gi
+      storageClass: truenas-iscsi-csi
+
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: "freeipa-acme-issuer"
+        nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+        nginx.ingress.kubernetes.io/secure-backends: "true"
+      ingressClassName: "nginx"
+      pathType: Prefix
+      activeService: true
+      hosts:
+      - host: vault.k8s.example.com
+      tls:
+      - secretName: vault-tls-ingress
+        hosts:
+          - vault.k8s.example.com
+
+    ha:
+      replicas: 3
+
+      raft:
+        config: |
+          ui = true
+
+          listener "tcp" {
+            tls_disable     = "false"
+            address         = "[::]:8200"
+            cluster_address = "[::]:8201"
+            tls_cert_file   = "/vault/userconfig/tls-server/tls.crt"
+            tls_key_file    = "/vault/userconfig/tls-server/tls.key"
+            tls_client_ca_file = "/vault/userconfig/tls-ca/ca.crt"
+            # Enable unauthenticated metrics access (necessary for Prometheus Operator)
+            telemetry {
+              unauthenticated_metrics_access = "true"
+            }
+          }
+
+          seal "transit" {
+            address = "https://vault.oci.example.com:443"
+            disable_renewal = "false"
+            key_name        = "autounseal"
+            mount_path      = "transit/"
+
+            tls_ca_cert     = "/vault/userconfig/tls-ca/ca.crt"
+            tls_server_name = "vault.oci.example.com"
+            tls_skip_verify = "false"
+          }
+
+          storage "raft" {
+            path = "/vault/data"
+
+            retry_join {
+              leader_api_addr = "https://vault-0.vault-internal:8200"
+              leader_ca_cert_file = "/vault/userconfig/tls-ca/ca.crt"
+              leader_client_cert_file = "/vault/userconfig/tls-server/tls.crt"
+              leader_client_key_file = "/vault/userconfig/tls-server/tls.key"
+              leader_tls_servername = "vault.k8s.example.com"
+            }
+            retry_join {
+              leader_api_addr = "https://vault-1.vault-internal:8200"
+              leader_ca_cert_file = "/vault/userconfig/tls-ca/ca.crt"
+              leader_client_cert_file = "/vault/userconfig/tls-server/tls.crt"
+              leader_client_key_file = "/vault/userconfig/tls-server/tls.key"
+              leader_tls_servername = "vault.k8s.example.com"
+            }
+            retry_join {
+              leader_api_addr = "https://vault-2.vault-internal:8200"
+              leader_ca_cert_file = "/vault/userconfig/tls-ca/ca.crt"
+              leader_client_cert_file = "/vault/userconfig/tls-server/tls.crt"
+              leader_client_key_file = "/vault/userconfig/tls-server/tls.key"
+              leader_tls_servername = "vault.k8s.example.com"
+            }
+
+            autopilot {
+              cleanup_dead_servers = "true"
+              last_contact_threshold = "200ms"
+              last_contact_failure_threshold = "10m"
+              max_trailing_logs = 250
+              min_quorum = 5
+              server_stabilization_time = "10s"
+            }
+
+          }
+
+          telemetry {
+            prometheus_retention_time = "30s"
+            disable_hostname = true
+          }
+
+          service_registration "kubernetes" {}

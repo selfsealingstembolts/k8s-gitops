@@ -1,0 +1,71 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: otel-k8s-daemonset-chart
+name: opentelemetry-collector
+repo: https://open-telemetry.github.io/opentelemetry-helm-charts
+version: 0.141.1
+releaseName: otel-k8s-daemonset
+namespace: clickstack
+includeCRDs: false
+valuesInline:
+  mode: daemonset
+
+  image:
+    repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
+
+  command:
+    name: otelcol-k8s
+
+  presets:
+    logsCollection:
+      enabled: true
+    hostMetrics:
+      enabled: true
+    # Configures the Kubernetes Processor to add Kubernetes metadata.
+    # Adds the k8sattributes processor to all the pipelines and adds the necessary rules to ClusterRole.
+    # More Info: https://opentelemetry.io/docs/kubernetes/collector/components/#kubernetes-attributes-processor
+    kubernetesAttributes:
+      enabled: true
+      # When enabled the processor will extra all labels for an associated pod and add them as resource attributes.
+      # The label's exact name will be the key.
+      extractAllPodLabels: true
+      # When enabled the processor will extra all annotations for an associated pod and add them as resource attributes.
+      # The annotation's exact name will be the key.
+      extractAllPodAnnotations: true
+    # Configures the collector to collect node, pod, and container metrics from the API server on a kubelet..
+    # Adds the kubeletstats receiver to the metrics pipeline and adds the necessary rules to ClusterRole.
+    # More Info: https://opentelemetry.io/docs/kubernetes/collector/components/#kubeletstats-receiver
+    kubeletMetrics:
+      enabled: true
+
+  extraEnvs:
+    - name: HYPERDX_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: otel-api-secret
+          key: HYPERDX_API_KEY
+          optional: true
+    - name: OTEL_COLLECTOR_ENDPOINT
+      valueFrom:
+        configMapKeyRef:
+          name: otel-config
+          key: OTEL_COLLECTOR_ENDPOINT
+
+  config:
+    exporters:
+      otlphttp:
+        endpoint: "${env:OTEL_COLLECTOR_ENDPOINT}"
+        compression: gzip
+        headers:
+          authorization: "${env:HYPERDX_API_KEY}"
+
+    service:
+      pipelines:
+        logs:
+          exporters:
+            - otlphttp
+        metrics:
+          exporters:
+            - otlphttp

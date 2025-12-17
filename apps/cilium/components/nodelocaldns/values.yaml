@@ -1,0 +1,9 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: cilium-chart
+valuesInline:
+
+  bgpControlPlane:
+    enabled: true

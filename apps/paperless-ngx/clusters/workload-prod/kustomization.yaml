@@ -1,0 +1,80 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: paperless-ngx
+
+resources:
+  - ../../base
+  - valkey
+  - cnpg
+  - externalsecret.yaml
+  - pushsecret.yaml
+
+configMapGenerator:
+  - name: paperless-ngx-config
+    envs:
+      - config.env
+
+replacements:
+  - sourceValue: "paperless.k8s.example.com"
+    targets:
+      - select:
+          kind: Ingress
+          name: paperless-ngx
+        fieldPaths:
+          - metadata.annotations.[cert-manager.io/common-name]
+          - spec.tls.0.hosts.0
+          - spec.rules.0.host
+        options:
+          create: true
+
+patches:
+  - target:
+      kind: Ingress
+      name: paperless-ngx
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: vault-issuer
+
+  - target:
+      kind: PersistentVolumeClaim
+      name: paperless-ngx-data
+    patch: |-
+      - op: replace
+        path: "/spec/storageClassName"
+        value: truenas-nfs-csi
+      - op: replace
+        path: "/spec/accessModes/0"
+        value: ReadWriteOnce
+      - op: replace
+        path: "/spec/resources/requests/storage"
+        value: 10Gi
+
+  - target:
+      kind: Deployment
+      name: paperless-ngx
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: paperless-ngx
+      spec:
+        template:
+          spec:
+            volumes:
+              - name: media
+                nfs:
+                  server: 10.100.20.31
+                  path: /mnt/tank/media/paperless/media
+              - name: export
+                nfs:
+                  server: 10.100.20.31
+                  path: /mnt/tank/media/paperless/export
+              - name: consume
+                nfs:
+                  server: 10.100.20.31
+                  path: /mnt/tank/media/paperless/consume
+            securityContext:
+              fsGroup: 9001

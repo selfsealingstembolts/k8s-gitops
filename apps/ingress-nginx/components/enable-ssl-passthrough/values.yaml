@@ -1,0 +1,9 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: ingress-nginx-chart
+valuesInline:
+  controller:
+    extraArgs:
+      enable-ssl-passthrough: ""

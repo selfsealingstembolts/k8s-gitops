@@ -1,0 +1,40 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mariadb
+
+resources:
+  - ../../base
+
+
+configMapGenerator:
+  - name: mariadb-config
+    behavior: replace
+    files:
+      - my.cnf
+
+secretGenerator:
+  - name: mariadb
+    behavior: replace
+    envs:
+      - secrets/creds.env
+    options:
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/oci-oke-prod/mariadb"
+
+
+patches:
+  - target:
+      kind: PersistentVolumeClaim
+      name: mariadb-data
+    patch: |-
+      - op: replace
+        path: "/spec/accessModes/0"
+        value: ReadWriteOnce
+      - op: replace
+        path: "/spec/resources/requests/storage"
+        value: 20Gi
+      - op: add
+        path: "/spec/storageClassName"
+        value: longhorn

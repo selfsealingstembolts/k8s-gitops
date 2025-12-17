@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freshrss
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: freshrss
+          image: freshrss/freshrss:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: freshrss-config-env
+            - secretRef:
+                name: freshrss-secret
+          env:
+            - name: FRESHRSS_INSTALL
+              value: "--default-user=admin"
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /var/www/FreshRSS/data
+            - name: config-php
+              mountPath: /var/www/FreshRSS/data/config.custom.php
+              subPath: config.custom.php
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 30
+            failureThreshold: 30
+            timeoutSeconds: 1
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "80Mi"
+              cpu: "5m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: freshrss-data
+        - name: config-php
+          secret:
+            secretName: freshrss-config-php

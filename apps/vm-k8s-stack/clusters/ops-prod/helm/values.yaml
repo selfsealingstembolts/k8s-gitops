@@ -1,0 +1,77 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: victoria-metrics-k8s-stack-chart
+valuesInline:
+  vmsingle:
+    spec:
+      retentionPeriod: "60d"
+      storage:
+        storageClassName: truenas-iscsi-slow-csi
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Gi
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: vault-issuer
+        cert-manager.io/common-name: vm.k8s.example.com
+        nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        nginx.ingress.kubernetes.io/proxy-buffering: "off"
+        nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+        nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+        nginx.ingress.kubernetes.io/server-snippet: |
+          client_max_body_size 0;
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          chunked_transfer_encoding off;
+      hosts:
+        - vm.k8s.example.com
+      tls:
+        - secretName: vmsingle-tls-ingress
+          hosts:
+            - vm.k8s.example.com
+
+  alertmanager:
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: vault-issuer
+        cert-manager.io/common-name: alertmanager.k8s.example.com
+      hosts:
+        - alertmanager.k8s.example.com
+      tls:
+        - secretName: alertmanager-tls-ingress
+          hosts:
+            - alertmanager.k8s.example.com
+
+  vmalert:
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: vault-issuer
+        cert-manager.io/common-name: vmalert.k8s.example.com
+      hosts:
+        - vmalert.k8s.example.com
+      tls:
+        - secretName: vmalert-tls-ingress
+          hosts:
+            - vmalert.k8s.example.com
+
+  vmagent:
+    spec:
+      externalLabels:
+        cluster: ops-prod
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: vault-issuer
+        cert-manager.io/common-name: vmagent.k8s.example.com
+      hosts:
+        - vmagent.k8s.example.com
+      tls:
+        - secretName: vmagent-tls-ingress
+          hosts:
+            - vmagent.k8s.example.com

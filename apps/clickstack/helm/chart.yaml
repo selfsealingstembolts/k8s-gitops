@@ -1,0 +1,12 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: clickstack-chart
+name: clickstack
+repo: https://hyperdxio.github.io/helm-charts
+version: 1.0.1
+releaseName: clickstack
+namespace: clickstack
+includeCRDs: true
+valuesInline:

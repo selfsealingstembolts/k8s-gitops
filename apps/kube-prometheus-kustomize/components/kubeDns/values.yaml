@@ -1,0 +1,11 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kube-prometheus-chart
+valuesInline:
+
+  ## Component scraping kubeDns. Use either this or coreDns
+  ##
+  kubeDns:
+    enabled: true

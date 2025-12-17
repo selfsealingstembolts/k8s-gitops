@@ -1,0 +1,20 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: gitlab-operator-chart
+name: gitlab-operator
+repo: https://charts.gitlab.io
+version: 2.3.1
+releaseName: gitlab-operator
+namespace: gitlab-system
+includeCRDs: true
+valuesInline:
+  nginx-ingress:
+    serviceAccount:
+      create: false
+  prometheus:
+    serviceAccount:
+      server:
+        create: false
+  installCertmanager: false

@@ -1,0 +1,20 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: keycloak-monitor
+  labels:
+    app: keycloak
+    app.kubernetes.io/instance: keycloak
+spec:
+  jobLabel: app
+  endpoints:
+  - port: https
+    path: /metrics
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+  selector:
+    matchLabels:
+      app: keycloak
+      app.kubernetes.io/instance: keycloak

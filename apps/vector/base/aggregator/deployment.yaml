@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-aggregator
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        vector.dev/exclude: "true"
+    spec:
+      containers:
+        - name: vector
+          image: "docker.io/timberio/vector:latest-distroless-libc"
+          args:
+            - --config-dir
+            - /etc/vector/
+          env:
+            - name: VECTOR_LOG
+              value: "info"
+          ports:
+            - name: api
+              containerPort: 8686
+              protocol: TCP
+            - name: vector
+              containerPort: 6000
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: "/vector-data-dir"
+            - name: config
+              mountPath: "/etc/vector/"
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: api
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: api
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: vector-aggregator-config

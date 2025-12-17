@@ -1,0 +1,1 @@
+(import "../../../../../../vendor/prometheus-operator/podmonitors-crd.json")

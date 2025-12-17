@@ -1,0 +1,27 @@
+---
+apiVersion: minio.min.io/v2
+kind: Tenant
+metadata:
+  name: minio
+spec:
+  externalCaCertSecret:
+    - name: ca-bundle
+      type: cert-manager.io/v1
+  pools:
+    - servers: 1
+      name: pool-0
+      volumesPerServer: 1
+      volumeClaimTemplate:
+        metadata:
+          name: data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Ti
+          storageClassName: truenas-iscsi-slow-csi
+  requestAutoCert: false
+  exposeServices:
+    console: false
+    minio: false

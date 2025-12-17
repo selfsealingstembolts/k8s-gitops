@@ -1,0 +1,53 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  - ../../base
+  - certificate.yaml
+  - projects.yaml
+  - applications.yaml
+  - clusters-externalsecret.yaml
+  - repos-externalsecret.yaml
+  - argocd-externalsecret.yaml
+
+components:
+  - ../../components/argocd-vault-plugin
+  - ../../components/delete-network-policies
+  - ../../components/metrics
+  - ../../components/dashboard
+  - ../../components/ssh-known-hosts
+
+configMapGenerator:
+  - name: argocd-tls-certs-cm
+    behavior: merge
+    files:
+      - gitlab.example.com=ca.crt
+
+  - name: argocd-rbac-cm
+    behavior: merge
+    files:
+      - policy.csv
+    options:
+      disableNameSuffixHash: true
+
+patches:
+  - target:
+      name: argocd-server
+      kind: Service
+    patch: |-
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: argocd-server
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: argocd.example.com
+      spec:
+        type: LoadBalancer
+
+  - target:
+      name: argocd-cm
+      kind: ConfigMap
+    path: argocd-cm.yaml

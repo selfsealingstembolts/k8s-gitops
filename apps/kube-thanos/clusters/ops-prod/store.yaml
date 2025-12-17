@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-store
+spec:
+  template:
+    spec:
+      containers:
+        - name: thanos-store
+          args:
+            - store
+            - --log.level=info
+            - --log.format=logfmt
+            - --data-dir=/var/thanos/store
+            - --grpc-address=0.0.0.0:10901
+            - --http-address=0.0.0.0:10902
+            - --objstore.config=$(OBJSTORE_CONFIG)
+            - --ignore-deletion-marks-delay=24h
+            - |-
+              --index-cache.config="config":
+                "addr": "redis.redis.svc.cluster.local:6379"
+                "db": 0
+                "dial_timeout": "5s"
+                "read_timeout": "3s"
+                "write_timeout": "3s"
+                "pool_size": 100
+                "min_idle_conns": 10
+                "idle_timeout": "5m0s"
+                "max_conn_age": "0s"
+                "max_get_multi_concurrency": 100
+                "get_multi_batch_size": 100
+                "max_set_multi_concurrency": 100
+                "set_multi_batch_size": 100
+              "type": "redis"
+            - |-
+              --store.caching-bucket.config="config":
+                "self_url": "${HOST_IP_ADDRESS}:8080"
+                "groupcache_group": "store_group"
+                "dns_interval": "1s"
+                "timeout": "2s"
+              "type": "groupcache"

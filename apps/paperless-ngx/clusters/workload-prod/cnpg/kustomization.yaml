@@ -1,0 +1,123 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namePrefix: paperless-ngx-
+
+components:
+  - ../../../../../components/cnpg-cluster
+
+images:
+  - name: ghcr.io/cloudnative-pg/postgresql
+    newTag: 17.5-1
+
+labels:
+  - pairs:
+      app.kubernetes.io/instance: paperless-ngx
+      app.kubernetes.io/part-of: paperless-ngx
+    includeTemplates: false
+    includeSelectors: false
+
+replacements:
+  - source:
+      kind: Cluster
+      name: cnpg-cluster
+      fieldPath: spec.imageName
+      options:
+        delimiter: ':'
+        index: 1
+    targets:
+      - select:
+          kind: Cluster
+        fieldPaths: &fieldPaths
+          - metadata.labels.[app.kubernetes.io/version]
+        options: &options
+          create: true
+      - select:
+          kind: Secret
+        fieldPaths: *fieldPaths
+        options: *options
+  - sourceValue: paperless-ngx
+    targets:
+      - select:
+          kind: Cluster
+          name: cnpg-cluster
+        fieldPaths:
+          - spec.bootstrap.initdb.database
+          - spec.bootstrap.initdb.owner
+      - select:
+          kind: ObjectStore
+          name: cnpg-minio
+        fieldPaths:
+          - spec.configuration.destinationPath
+        options:
+          delimiter: '/'
+          index: 4
+      - select:
+          kind: SecretStore
+          name: cnpg-secretstore
+        fieldPaths:
+          - spec.provider.fake.data.[key=^"appName"$].value
+  - sourceValue: paperless-ngx-cnpg
+    targets:
+      - select:
+          kind: PushSecret
+          name: cnpg-pushsecret
+        fieldPaths:
+          - spec.data.0.match.remoteRef.remoteKey
+        options:
+          delimiter: '/'
+          index: 2
+  - sourceValue: paperless-ngx
+    targets:
+      - select:
+          kind: SecretStore
+          name: cnpg-secretstore
+        fieldPaths:
+          - spec.provider.fake.data.[key=^"namespace"$].value
+  - sourceValue: workload-prod
+    targets:
+      - select:
+          kind: ObjectStore
+          name: cnpg-minio
+        fieldPaths:
+          - spec.configuration.destinationPath
+        options:
+          delimiter: '/'
+          index: 3
+      - select:
+          kind: PushSecret
+          name: cnpg-pushsecret
+        fieldPaths:
+          - spec.data.0.match.remoteRef.remoteKey
+        options:
+          delimiter: '/'
+          index: 1
+  - sourceValue: truenas-iscsi-csi
+    targets:
+      - select:
+          kind: Cluster
+          name: cnpg-cluster
+        fieldPaths:
+          - spec.storage.storageClass
+  - sourceValue: 10Gi
+    targets:
+      - select:
+          kind: Cluster
+          name: cnpg-cluster
+        fieldPaths:
+          - spec.storage.size
+  - sourceValue: truenas-nfs-csi
+    targets:
+      - select:
+          kind: Cluster
+          name: cnpg-cluster
+        fieldPaths:
+          - spec.walStorage.storageClass
+  - sourceValue: 10Gi
+    targets:
+      - select:
+          kind: Cluster
+          name: cnpg-cluster
+        fieldPaths:
+          - spec.walStorage.size

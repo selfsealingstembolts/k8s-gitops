@@ -1,0 +1,133 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: parse-config
+  annotations:
+    workflows.argoproj.io/description: >-
+      Parse CI config
+spec:
+  entrypoint: main
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: parse
+            template: parse
+
+    - name: parse
+      script:
+        # renovate: image=harbor.k8s.example.com/local/ubi8-python-311-pyyaml
+        image: harbor.k8s.example.com/local/ubi8-python-311-pyyaml:1-8.1687187517
+        command: [python]
+        source: |
+          from base64 import b64decode
+          import json
+          import yaml
+          import os
+          import sys
+          import glob
+          from pathlib import Path,PurePath
+
+          config_filename = "{{workflow.parameters.config_filename}}"
+          path = "{{workflow.parameters.path}}"
+          payload_json = b64decode(r"{{=sprig.b64enc(workflow.parameters.payload)}}".encode()).decode()
+          payload = json.loads(payload_json,strict=False)
+
+          modified_files = []
+          for commit in payload['commits']:
+              for modified in commit['modified']:
+                  modified_files.append(Path(PurePath(path, modified)).resolve())
+
+          ci_configs = []
+          for config in Path(path).rglob(config_filename):
+              ci_configs.append(PurePath(config))
+
+          build_files = []
+          for config in ci_configs:
+              config_path = PurePath(config).parent
+
+              with open(config) as config_data:
+                  config_yaml = yaml.safe_load(config_data)
+
+              triggers = []
+              if 'triggers' in config_yaml:
+                  for trigger in config_yaml['triggers']:
+                      triggers.append(trigger)
+
+              triggers.append('**')
+
+              trigger_files = []
+              for trigger in triggers:
+                  for f in glob.glob(trigger, root_dir=config_path, include_hidden=True):
+                      trigger_files.append(Path(config_path, f).resolve())
+
+              intersection = list(set(trigger_files) & set(modified_files))
+
+              if len(intersection) > 0:
+                  if Path(PurePath(config_path), 'Containerfile').is_file():
+                      build_files.append(Path(PurePath(config_path, 'Containerfile')).resolve())
+                  if Path(PurePath(config_path), 'Dockerfile').is_file():
+                      build_files.append(Path(PurePath(config_path, 'Dockerfile')).resolve())
+
+          kaniko_args = []
+          for build_file in build_files:
+              config = PurePath(build_file).with_name(config_filename)
+
+              with open(config) as config_data:
+                  config_yaml = yaml.safe_load(config_data)
+
+              name = config_yaml['name']
+              tags = config_yaml['tags']
+              labels = config_yaml['labels']
+
+              destinations = []
+              for tag in tags:
+                  destinations.append(f"--destination={name}:{tag}")
+
+              if 'context' in config_yaml:
+                  context = config_yaml['context']
+                  context_path = Path(PurePath(config_path, context)).resolve()
+              else:
+                  context_path = Path(config.parent).resolve()
+
+              if 'dockerfile' in config_yaml:
+                  dockerfile = config_yaml['dockerfile']
+              else:
+                  dockerfile = PurePath(build_file).relative_to(context_path)
+
+              build_args = []
+              if 'args' in config_yaml:
+                  args = config_yaml['args']
+                  for key, value in args.items():
+                      build_args.append(f'--build-arg "{key}={value}"')
+
+              flags = []
+              try:
+                  flags.append(f"--dockerfile={dockerfile}")
+                  flags.append(f"--context=dir://{context_path}")
+
+                  if len(destinations) > 0:
+                      for destination in destinations:
+                          flags.append(f"{destination}")
+                  else:
+                      print('ERROR: Image destination not set. Exiting.')
+                      exit(1)
+
+                  if len(build_args) > 0:
+                      for build_arg in build_args:
+                          flags.append(f"{build_arg}")
+
+                  flags = " ".join(flags)
+
+                  kaniko_args.append(flags)
+
+              except Exception as e:
+                  print("Error: ", e)
+
+          json.dump(kaniko_args, sys.stdout)
+
+      inputs:
+        artifacts:
+          - name: source
+            path: /src

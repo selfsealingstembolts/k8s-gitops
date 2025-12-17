@@ -1,0 +1,21 @@
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: minio-tenant
+spec:
+  namespaceSelector:
+    matchNames:
+      - minio-tenant
+  selector:
+    matchLabels:
+      v1.min.io/tenant: minio
+  endpoints:
+  - port: http-minio
+    path: /minio/v2/metrics/cluster
+  - port: http-minio
+    path: /minio/v2/metrics/node
+  - port: http-minio
+    path: /minio/v2/metrics/bucket
+  - port: http-minio
+    path: /minio/v2/metrics/resources

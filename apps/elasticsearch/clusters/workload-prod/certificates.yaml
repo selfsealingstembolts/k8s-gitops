@@ -1,0 +1,45 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: elasticsearch-cert
+  namespace: elastic
+spec:
+  dnsNames:
+    - es.k8s.example.com
+    - elasticsearch-es-http.elastic.svc
+    - elasticsearch-es-http.elastic.svc.cluster.local
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  secretName: elasticsearch-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kibana-cert
+  namespace: elastic
+spec:
+  dnsNames:
+    - kibana.k8s.example.com
+    - kibana-kb-http.elastic.svc
+    - kibana-kb-http.elastic.svc.cluster.local
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  secretName: kibana-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: fleet-cert
+  namespace: elastic
+spec:
+  dnsNames:
+    - fleet.k8s.example.com
+    - fleet-server-agent-http.elastic.svc
+    - fleet-server-agent-http.elastic.svc.cluster.local
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+  secretName: fleet-tls

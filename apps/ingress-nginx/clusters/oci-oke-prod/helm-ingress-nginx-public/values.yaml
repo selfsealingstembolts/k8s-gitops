@@ -1,0 +1,24 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: ingress-nginx-chart
+releaseName: ingress-nginx-public
+valuesInline:
+  controller:
+    service:
+      externalTrafficPolicy: "Local"
+      annotations:
+        oci-oraclecloud.com/load-balancer-type: "lb"
+        service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+        service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+        service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
+        service.beta.kubernetes.io/oci-load-balancer-subnet1: ""
+        oci.oraclecloud.com/oci-network-security-groups: ""
+    ingressClassResource:
+      name: "ingress-nginx-public"
+      enabled: true
+      default: false
+      controllerValue: "k8s.io/ingress-nginx-public"
+    publishService:
+      enabled: true

@@ -1,0 +1,37 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Keycloak
+      name: keycloak
+    patch: |-
+      - op: add
+        path: "/spec/additionalOptions/-"
+        value:
+          name: truststore-paths
+          value: "/run/secrets/bundles/ca.crt"
+      - op: add
+        path: "/spec/additionalOptions/-"
+        value:
+          name: features
+          value: "kerberos"
+      - op: add
+        path: "/spec/unsupported"
+        value:
+          podTemplate:
+            spec:
+              containers:
+                - volumeMounts:
+                    - name: truststore
+                      mountPath: /run/secrets/bundles
+                    - name: keytab
+                      mountPath: /run/secrets/keytab
+              volumes:
+                - name: truststore
+                  configMap:
+                    name: ca-bundle
+                - name: keytab
+                  secret:
+                    secretName: keycloak-keytab

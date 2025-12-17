@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      name: snapshot-controller
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: "/spec/template/spec/containers/0/args/-"
+        value: "--enable-distributed-snapshotting"
+  - target:
+      name: snapshot-controller-runner
+      kind: ClusterRole
+    patch: |-
+      - op: add
+        path: "/rules/-"
+        value:
+          apiGroups: [""]
+          resources: ["nodes"]
+          verbs: ["get", "list", "watch"]

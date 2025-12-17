@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ntfy-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: default-csi
+  resources:
+    requests:
+      storage: 1Gi

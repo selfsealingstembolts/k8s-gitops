@@ -1,0 +1,31 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - agent.yaml
+  - service.yaml
+
+patches:
+  - target:
+      name: kibana
+      kind: Kibana
+      namespace: elastic
+    patch: |-
+      - op: add
+        path: "/spec/config/xpack/fleet/packages/-"
+        value:
+          name: udp
+          version: latest
+      - op: add
+        path: "/spec/config/xpack/fleet/agentPolicies/-"
+        value:
+          name: Syslog Agent policy
+          id: syslog-agent
+          monitoring_enabled:
+            - logs
+            - metrics
+          package_policies:
+            - package:
+                name: udp
+              name: udp-syslog

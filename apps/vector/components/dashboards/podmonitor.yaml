@@ -1,0 +1,16 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: vector
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vector
+      app.kubernetes.io/instance: vector
+  namespaceSelector:
+    matchNames:
+      - default
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics

@@ -1,0 +1,55 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kube-prometheus-chart
+valuesInline:
+
+  prometheus:
+
+    # Service for thanos service discovery on sidecar
+    # Enable this can make Thanos Query can use
+    # `--store=dnssrv+_grpc._tcp.${kube-prometheus-stack.fullname}-thanos-discovery.${namespace}.svc.cluster.local` to discovery
+    # Thanos sidecar on prometheus nodes
+    # (Please remember to change ${kube-prometheus-stack.fullname} and ${namespace}. Not just copy and paste!)
+    thanosService:
+      enabled: true
+
+    # ServiceMonitor to scrape Sidecar metrics
+    # Needs thanosService to be enabled as well
+    thanosServiceMonitor:
+      enabled: true
+
+    # Service for external access to sidecar
+    # Enabling this creates a service to expose thanos-sidecar outside the cluster.
+    thanosServiceExternal:
+      enabled: false
+
+    # Ingress exposes thanos sidecar outside the cluster
+    thanosIngress:
+      enabled: false
+      path:
+        - /
+      pathType: Prefix
+
+    prometheusSpec:
+
+      ## How long to retain metrics
+      ##
+      retention: 6h
+
+      ## EnableAdminAPI enables Prometheus the administrative HTTP API which includes functionality such as deleting time series.
+      ## This is disabled by default.
+      ## ref: https://prometheus.io/docs/prometheus/latest/querying/api/#tsdb-admin-apis
+      ##
+      enableAdminAPI: false
+
+      ## Thanos configuration allows configuring various aspects of a Prometheus server in a Thanos environment.
+      ## This section is experimental, it may change significantly without deprecation notice in any release.
+      ## This is experimental and may change significantly without backward compatibility in any release.
+      ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#thanosspec
+      ##
+      thanos:
+        objectStorageConfig:
+          key: thanos.yaml
+          name: thanos-objstore-config

@@ -1,0 +1,43 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kube-prometheus-chart
+valuesInline:
+
+  prometheus:
+
+    prometheusSpec:
+      externalLabels:
+        cluster: oci
+
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: longhorn
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+
+    # Ingress exposes thanos sidecar outside the cluster
+    thanosIngress:
+      enabled: true
+
+      ingressClassName: ingress-nginx-private
+
+      annotations:
+        cert-manager.io/cluster-issuer: "vault-issuer"
+        cert-manager.io/common-name: "thanos-oci.oci.example.com"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+
+      hosts:
+        - thanos-oci.oci.example.com
+      paths:
+        - /
+      tls:
+        - secretName: thanos-tls-ingress
+          hosts:
+            - thanos-oci.oci.example.com

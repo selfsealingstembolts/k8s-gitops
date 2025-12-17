@@ -1,0 +1,13 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: keycloak-cert
+spec:
+  secretName: keycloak-tls
+  dnsNames:
+  - keycloak.k8s.example.com
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io

@@ -1,0 +1,12 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: %APP%-chart
+name: %APP%
+repo: %REPO%
+version: %VERSION%
+releaseName: %APP%
+namespace: %NAMESPACE%
+includeCRDs: true
+valuesInline:

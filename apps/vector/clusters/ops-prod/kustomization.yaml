@@ -1,0 +1,28 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: vector
+
+resources:
+  - ../../base/agent
+  - ../../base/aggregator
+
+components:
+  - ../../components/metrics
+  - ../../components/dashboards
+
+configMapGenerator:
+  - name: vector-aggregator-config
+    behavior: replace
+    files:
+      - aggregator.yaml
+
+patches:
+  - target:
+      kind: PodMonitor
+      name: vector
+    patch: |-
+      - op: replace
+        path: "/spec/namespaceSelector/matchNames/0"
+        value: vector

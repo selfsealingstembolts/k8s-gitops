@@ -1,0 +1,56 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: cilium-chart
+valuesInline:
+
+  cluster:
+    # -- Name of the clsuter. Only required for Cluster Mesh.
+    name: ops-prod
+    # -- (int) Unique ID of the cluster. Must be unique across all connected
+    # clusters and in the range of 1 to 255. Only required for Cluster Mesh,
+    # may be 0 if Cluster Mesh is not used.
+    id: 10
+
+  externalIPs:
+    # -- Enable ExternalIPs service support.
+    enabled: true
+
+  hubble:
+    ui:
+      ingress:
+        enabled: true
+        annotations:
+          cert-manager.io/hostname: hubble-ops-prod.k8s.example.com
+          cert-manager.io/cluster-issuer: vault-issuer
+        hosts:
+          - hubble-ops-prod.k8s.example.com
+        tls:
+          - secretName: hubble-tls-ingress
+            hosts:
+              - hubble-ops-prod.k8s.example.com
+
+  ipam:
+    mode: cluster-pool
+    operator:
+      clusterPoolIPv4PodCIDRList:
+        - 10.246.0.0/16
+      clusterPoolIPv4MaskSize: 24
+
+  routingMode: native
+  ipv4NativeRoutingCIDR: "10.0.0.0/8"
+  autoDirectNodeRoutes: true
+
+  kubeProxyReplacement: true
+
+  k8sServiceHost: ops-prod.k8s.example.com
+  k8sServicePort: 6443
+
+  loadBalancer:
+    mode: dsr
+    algorithm: maglev
+
+  bpf:
+    masquerade: true
+    disableExternalIPMitigation: true

@@ -1,0 +1,11 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-chart
+valuesInline:
+  ui:
+    enabled: true
+    serviceType: "ClusterIP"
+    serviceNodePort: null
+    externalPort: 8200

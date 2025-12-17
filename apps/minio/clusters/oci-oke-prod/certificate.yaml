@@ -1,0 +1,15 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minio-tenant-tls
+  namespace: minio-tenant
+spec:
+  secretName: minio-tenant-tls
+  commonName: "minio.oci.example.com"
+  dnsNames:
+    - "minio.oci.example.com"
+  issuerRef:
+    name: vault-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io

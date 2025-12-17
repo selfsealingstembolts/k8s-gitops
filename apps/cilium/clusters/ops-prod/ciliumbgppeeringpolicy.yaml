@@ -1,0 +1,25 @@
+---
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumBGPPeeringPolicy
+metadata:
+  name: vyos-bgp-peering-policy
+spec: # CiliumBGPPeeringPolicySpec
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/os: linux
+  virtualRouters: # []CiliumBGPVirtualRouter
+    - localASN: 64601
+      exportPodCIDR: true
+      serviceSelector:
+        matchExpressions:
+          - {key: somekey, operator: NotIn, values: ['never-used-value']}
+      neighbors: # []CiliumBGPNeighbor
+        - peerAddress: '10.100.22.1/32'
+          peerASN: 64512
+          eBGPMultihopTTL: 10
+          connectRetryTimeSeconds: 120
+          holdTimeSeconds: 90
+          keepAliveTimeSeconds: 30
+          gracefulRestart:
+            enabled: true
+            restartTimeSeconds: 120

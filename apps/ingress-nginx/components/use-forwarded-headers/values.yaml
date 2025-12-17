@@ -1,0 +1,13 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: ingress-nginx-chart
+valuesInline:
+  controller:
+    config:
+      use-forwarded-headers: true
+      enable-real-ip: true
+      forwarded-for-header: proxy_protocol
+    service:
+      externalTrafficPolicy: Cluster

@@ -1,0 +1,31 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-chart
+valuesInline:
+  server:
+    ha:
+      # Enables Vault's integrated Raft storage.  Unlike the typical HA modes where
+      # Vault's persistence is external (such as Consul), enabling Raft mode will create
+      # persistent volumes for Vault to store data according to the configuration under server.dataStorage.
+      # The Vault cluster will coordinate leader elections and failovers internally.
+      raft:
+        enabled: true
+
+    # This configures the Vault Statefulset to create a PVC for data
+    # storage when using the file or raft backend storage engines.
+    # See https://www.vaultproject.io/docs/configuration/storage/index.html to know more
+    dataStorage:
+      enabled: true
+      # Size of the PVC created
+      size: 10Gi
+      # Location where the PVC will be mounted.
+      mountPath: "/vault/data"
+      # Name of the storage class to use.  If null it will use the
+      # configured default Storage Class.
+      storageClass: null
+      # Access Mode of the storage device being used for the PVC
+      accessMode: ReadWriteOnce
+      # Annotations to apply to the PVC
+      annotations: {}

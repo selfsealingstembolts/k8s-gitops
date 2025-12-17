@@ -1,0 +1,39 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cnpg-cluster
+spec:
+  description: "cloudnative-pg cluster"
+  imageName: ghcr.io/cloudnative-pg/postgresql:latest
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+      secret:
+        name: cnpg-secret
+
+  storage:
+    storageClass: default
+    size: 1Gi
+
+  walStorage:
+    storageClass: default
+    size: 1Gi
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: cnpg-minio
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "1"

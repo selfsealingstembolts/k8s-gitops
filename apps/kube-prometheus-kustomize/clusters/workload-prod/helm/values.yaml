@@ -1,0 +1,28 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kube-prometheus-chart
+valuesInline:
+
+  prometheus:
+
+    prometheusSpec:
+      externalLabels:
+        cluster: workload
+
+    thanosServiceExternal:
+      enabled: true
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: thanos-sidecar-workload.k8s.example.com
+      type: LoadBalancer
+
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: truenas-iscsi-csi
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 50Gi

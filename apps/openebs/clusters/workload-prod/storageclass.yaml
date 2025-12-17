@@ -1,0 +1,21 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-lvm
+allowVolumeExpansion: true
+provisioner: local.csi.openebs.io
+parameters:
+  storage: "lvm"
+  volgroup: "openebsvg"
+  fsType: xfs
+  thinProvision: "yes"
+mountOptions:
+  - discard
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: openebs.io/lvmvg
+        values:
+          - nvme

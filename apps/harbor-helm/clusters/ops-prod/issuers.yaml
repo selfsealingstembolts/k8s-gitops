@@ -1,0 +1,15 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: harbor-issuer-bootstrap
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: harbor-issuer
+spec:
+  ca:
+    secretName: harbor-internal-ca

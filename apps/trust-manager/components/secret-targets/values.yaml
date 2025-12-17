@@ -1,0 +1,23 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: trust-manager-chart
+valuesInline:
+  secretTargets:
+    # If set to true, enable writing trust bundles to Kubernetes Secrets as a target.
+    # trust-manager can only write to secrets which are explicitly allowed via either authorizedSecrets or authorizedSecretsAll.
+    # NOTE: Enabling secret targets will grant trust-manager read access to all secrets in the cluster.
+    enabled: true
+    # If set to true, grant read/write permission to all secrets across the cluster. Use with caution!
+    # If set, ignores the authorizedSecrets list.
+    authorizedSecretsAll: false
+    # A list of secret names which trust-manager will be permitted to read and write across all namespaces.
+    # These will be the only allowable Secrets that can be used as targets. If the list is empty (and authorizedSecretsAll is false),
+    # trust-manager will not be able to write to secrets and will only be able to read secrets in the trust namespace for use as sources.
+    authorizedSecrets:
+      - freeipa-bundle
+      - vault-k8s-bundle
+      - vault-oci-bundle
+      - ca-certificates-bundle
+      - ca-bundle

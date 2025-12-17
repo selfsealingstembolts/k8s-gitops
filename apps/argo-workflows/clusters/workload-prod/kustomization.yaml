@@ -1,0 +1,97 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argo
+
+resources:
+  - ../../base
+  - serviceaccounts.yaml
+  - rbac.yaml
+
+components:
+  - ../../components/generic-workflow-templates
+  - ../../components/ci-container-workflow
+  - ../../components/metrics
+
+configMapGenerator:
+  - name: workflow-controller-configmap
+    namespace: argo
+    behavior: merge
+    files:
+      - config=workflow-controller-config.yaml
+    options:
+      disableNameSuffixHash: true
+
+secretGenerator:
+  - name: argo-workflows-secret
+    envs:
+      - secrets/secret.env
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "kv/data/kubernetes/workload-prod/argo-workflows"
+
+  - name: argo-workflows-kaniko-secret
+    envs:
+      - secrets/kaniko.env
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "kv/data/kubernetes/workload-prod/kaniko"
+
+  - name: argo-workflows-harbor-secret
+    files:
+      - config.json=secrets/harbor.json
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "kv/data/kubernetes/workload-prod/kaniko"
+
+patches:
+  - target:
+      kind: Ingress
+      name: argo-workflows
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: vault-issuer
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1common-name"
+        value: workflows.k8s.example.com
+      - op: replace
+        path: "/spec/tls/0/hosts/0"
+        value: workflows.k8s.example.com
+      - op: replace
+        path: "/spec/tls/0/secretName"
+        value: argo-workflows-tls
+      - op: replace
+        path: /spec/rules/0/host
+        value: workflows.k8s.example.com
+
+  - target:
+      kind: Deployment
+      name: argo-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argo-server
+      spec:
+        template:
+          spec:
+            containers:
+              - name: argo-server
+                args:
+                  - server
+                  - --namespaced
+                  - --auth-mode=sso
+                volumeMounts:
+                  - name: freeipa-bundle
+                    mountPath: /etc/ssl/certs/ca.crt
+                    subPath: ca.crt
+                    readOnly: true
+            volumes:
+              - name: freeipa-bundle
+                configMap:
+                  name: freeipa-bundle

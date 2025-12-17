@@ -1,0 +1,27 @@
+---
+apiVersion: apps.gitlab.com/v1beta1
+kind: GitLab
+metadata:
+  name: gitlab
+spec:
+  chart:
+    version: "8.0.1"
+    values:
+      global:
+        hosts:
+          domain: example.com
+          https: true
+          gitlab:
+            name: gitlab.example.com
+            https: true
+          registry:
+            name: registry.example.com
+            https: true
+          pages:
+            name: pages.example.com
+            https: true
+          ssh: gitlab.example.com
+        monitoring:
+          enabled: true
+        ingress:
+          enabled: false

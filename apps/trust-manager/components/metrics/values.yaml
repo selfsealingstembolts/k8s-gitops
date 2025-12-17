@@ -1,0 +1,12 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: trust-manager-chart
+valuesInline:
+  app:
+    metrics:
+      service:
+        enabled: true
+        servicemonitor:
+          enabled: true

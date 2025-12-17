@@ -1,0 +1,81 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: harbor-internal-ca
+spec:
+  isCA: true
+  commonName: harbor-internal-ca
+  secretName: harbor-internal-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: harbor-issuer-bootstrap
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: core-internal-certs
+spec:
+  secretName: core-internal-certs
+  dnsNames:
+  - harbor-core
+  issuerRef:
+    name: harbor-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: registry-internal-certs
+spec:
+  secretName: registry-internal-certs
+  dnsNames:
+  - harbor-registry
+  issuerRef:
+    name: harbor-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: portal-internal-certs
+spec:
+  secretName: portal-internal-certs
+  dnsNames:
+  - harbor-portal
+  issuerRef:
+    name: harbor-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: jobservice-internal-certs
+spec:
+  secretName: jobservice-internal-certs
+  dnsNames:
+  - harbor-jobservice
+  issuerRef:
+    name: harbor-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: trivy-internal-certs
+spec:
+  secretName: trivy-internal-certs
+  dnsNames:
+  - harbor-trivy
+  issuerRef:
+    name: harbor-issuer
+    kind: Issuer
+    group: cert-manager.io

@@ -1,0 +1,55 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: freshrss
+
+resources:
+  - ../../base
+  - cnpg
+  - externalsecret.yaml
+  - pushsecret.yaml
+
+components:
+  - ../../../../components/ca-bundle
+
+configMapGenerator:
+  - name: freshrss-config-env
+    envs:
+      - config.env
+
+replacements:
+  - sourceValue: "freshrss.k8s.example.com"
+    targets:
+      - select:
+          kind: Ingress
+          name: freshrss
+        fieldPaths:
+          - metadata.annotations.[cert-manager.io/common-name]
+          - spec.tls.0.hosts.0
+          - spec.rules.0.host
+        options:
+          create: true
+
+patches:
+  - target:
+      kind: Ingress
+      name: freshrss
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: vault-issuer
+
+  - target:
+      kind: PersistentVolumeClaim
+      name: freshrss-data
+    patch: |-
+      - op: replace
+        path: "/spec/storageClassName"
+        value: truenas-nfs-csi
+      - op: replace
+        path: "/spec/accessModes/0"
+        value: ReadWriteOnce
+      - op: replace
+        path: "/spec/resources/requests/storage"
+        value: 1Gi

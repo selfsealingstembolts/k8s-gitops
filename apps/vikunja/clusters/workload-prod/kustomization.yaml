@@ -1,0 +1,99 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: vikunja
+
+resources:
+  - ../../base
+
+configMapGenerator:
+  - name: vikunja-api-config
+    behavior: replace
+    files:
+      - config.yml
+
+secretGenerator:
+  - name: vikunja-api-secret
+    behavior: replace
+    envs:
+      - secrets/api-secret.env
+    options:
+      annotations:
+        avp.kubernetes.io/path: "kv/data/kubernetes/workload-prod/vikunja"
+
+  - name: vikunja-typesense-secret
+    behavior: replace
+    envs:
+      - secrets/typesense-secret.env
+    options:
+      annotations:
+        avp.kubernetes.io/path: "kv/data/kubernetes/workload-prod/vikunja"
+
+
+patches:
+
+  - target:
+      kind: Ingress
+      name: vikunja
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: vault-issuer
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1common-name"
+        value: vikunja.k8s.example.com
+      - op: replace
+        path: "/spec/tls/0/hosts/0"
+        value: vikunja.k8s.example.com
+      - op: replace
+        path: "/spec/tls/0/secretName"
+        value: vikunja-tls
+      - op: replace
+        path: /spec/rules/0/host
+        value: vikunja.k8s.example.com
+
+  - target:
+      kind: PersistentVolumeClaim
+      name: vikunja-api-data
+    patch: |-
+      - op: replace
+        path: "/spec/storageClassName"
+        value: truenas-nfs-csi
+      - op: replace
+        path: "/spec/accessModes/0"
+        value: ReadWriteOnce
+      - op: replace
+        path: "/spec/resources/requests/storage"
+        value: 10Gi
+
+  - target:
+      kind: PersistentVolumeClaim
+      name: vikunja-typesense-data
+    patch: |-
+      - op: replace
+        path: "/spec/storageClassName"
+        value: truenas-nfs-csi
+      - op: replace
+        path: "/spec/accessModes/0"
+        value: ReadWriteOnce
+      - op: replace
+        path: "/spec/resources/requests/storage"
+        value: 1Gi
+
+  - target:
+      kind: Deployment
+      name: vikunja
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: vikunja
+      spec:
+        template:
+          spec:
+            containers:
+              - name: vikunja-frontend
+                env:
+                  - name: VIKUNJA_API_URL
+                    value: https://vikunja.k8s.example.com

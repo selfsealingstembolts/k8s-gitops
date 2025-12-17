@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - pvc.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: renovate-ce
+      app.kubernetes.io/instance: renovate-ce
+    includeSelectors: true
+    includeTemplates: true
+
+images:
+  - name: ghcr.io/mend/renovate-ce
+    newTag: 13.1.0-full

@@ -1,0 +1,14 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: gitlab-runner-chart
+name: gitlab-runner
+repo: https://charts.gitlab.io
+version: 0.83.3
+releaseName: gitlab-runner
+namespace: gitlab-runner
+includeCRDs: true
+valuesInline:
+  rbac:
+    create: true

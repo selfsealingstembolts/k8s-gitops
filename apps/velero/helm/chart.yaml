@@ -1,0 +1,40 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: velero-chart
+name: velero
+repo: https://vmware-tanzu.github.io/helm-charts
+version: 11.2.0
+releaseName: velero
+namespace: velero
+includeCRDs: true
+valuesInline:
+  metrics:
+    enabled: false
+  # This job upgrades the CRDs.
+  upgradeCRDs: false
+
+  configuration:
+    # Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.
+    # See https://velero.io/docs/v1.6/api-types/backupstoragelocation/
+    backupStorageLocation: []
+    # Parameters for the VolumeSnapshotLocation(s). Configure multiple by adding other element(s) to the volumeSnapshotLocation slice.
+    # See https://velero.io/docs/v1.6/api-types/volumesnapshotlocation/
+    volumeSnapshotLocation: []
+    # Comma separated list of velero feature flags. default: empty
+    # features: EnableCSI
+    features: EnableCSI
+  # Info about the secret to be used by the Velero deployment, which
+  # should contain credentials for the cloud provider IAM account you've
+  # set up for Velero.
+  credentials:
+    # Whether a secret should be used. Set to false if, for examples:
+    # - using kube2iam or kiam to provide AWS IAM credentials instead of providing the key file. (AWS only)
+    # - using workload identity instead of providing the key file. (Azure/GCP only)
+    useSecret: true
+    # Name of the secret to create if `useSecret` is true and `existingSecret` is empty
+    # name:
+    # Name of a pre-existing secret (if any) in the Velero namespace
+    # that should be used to get IAM account credentials. Optional.
+    existingSecret: velero-credentials

@@ -1,0 +1,8 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-chart
+valuesInline:
+  injector:
+    enabled: true

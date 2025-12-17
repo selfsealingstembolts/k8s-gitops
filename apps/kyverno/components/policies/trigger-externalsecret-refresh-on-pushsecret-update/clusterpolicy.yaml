@@ -1,0 +1,43 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: trigger-externalsecret-refresh-on-pushsecret-update
+  annotations:
+    policies.kyverno.io/title: Trigger ExternalSecret Refresh on PushSecret Update
+    policies.kyverno.io/category: External Secrets
+    policies.kyverno.io/subject: ExternalSecret, PushSecret
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/description: >-
+      This policy watches for updates to PushSecret resources. When a PushSecret
+      is updated, it finds any ExternalSecret in the same namespace that has a
+      'refresh-on-pushsecret-update.kyverno.io/source-pushsecret' annotation
+      pointing to the updated PushSecret. It then adds a 'kyverno.io/refreshedAt'
+      annotation to the ExternalSecret, triggering a reconciliation by the
+      External Secrets Operator.
+spec:
+  failurePolicy: Ignore
+  background: true
+  rules:
+  - name: trigger-externalsecret-refresh
+    match:
+      any:
+      - resources:
+          kinds:
+          - external-secrets.io/v1alpha1/PushSecret
+          operations:
+          - UPDATE
+    mutate:
+      patchStrategicMerge:
+        metadata:
+          annotations:
+            +(kyverno.io/refreshedAt): "{{time_now_utc()}}"
+      targets:
+        - apiVersion: external-secrets.io/v1
+          kind: ExternalSecret
+          namespace: "{{request.namespace}}"
+          preconditions:
+            all:
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.metadata.annotations.\"refresh-on-pushsecret-update.kyverno.io/source-pushsecret\" || ''}}"

@@ -1,0 +1,18 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-secrets-operator-chart
+name: vault-secrets-operator
+repo: https://helm.releases.hashicorp.com
+version: 1.0.1
+releaseName: vault-secrets-operator
+namespace: vault-secrets-operator-system
+includeCRDs: true
+valuesInline:
+  controller:
+    manager:
+      image:
+        repository: docker.io/hashicorp/vault-secrets-operator
+  tests:
+    enabled: false

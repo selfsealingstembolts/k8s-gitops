@@ -1,0 +1,109 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-chart
+valuesInline:
+  global:
+    serverTelemetry:
+      # Enable integration with the Prometheus Operator
+      # See the top level serverTelemetry section below before enabling this feature.
+      prometheusOperator: false
+
+  injector:
+    # If true, will enable a node exporter metrics endpoint at /metrics.
+    metrics:
+      enabled: false
+
+  # For more information see:
+  # https://developer.hashicorp.com/vault/docs/configuration/telemetry
+  # https://developer.hashicorp.com/vault/docs/internals/telemetry
+  serverTelemetry:
+    # Enable support for the Prometheus Operator. Currently, this chart does not support
+    # authenticating to Vault's metrics endpoint, so the following `telemetry{}` must be included
+    # in the `listener "tcp"{}` stanza
+    #  telemetry {
+    #    unauthenticated_metrics_access = "true"
+    #  }
+    #
+    # See the `standalone.config` for a more complete example of this.
+    #
+    # In addition, a top level `telemetry{}` stanza must also be included in the Vault configuration:
+    #
+    # example:
+    #  telemetry {
+    #    prometheus_retention_time = "30s"
+    #    disable_hostname = true
+    #  }
+    #
+    # Configuration for monitoring the Vault server.
+    serviceMonitor:
+      # The Prometheus operator *must* be installed before enabling this feature,
+      # if not the chart will fail to install due to missing CustomResourceDefinitions
+      # provided by the operator.
+      #
+      # Instructions on how to install the Helm chart can be found here:
+      #  https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+      # More information can be found here:
+      #  https://github.com/prometheus-operator/prometheus-operator
+      #  https://github.com/prometheus-operator/kube-prometheus
+
+      # Enable deployment of the Vault Server ServiceMonitor CustomResource.
+      enabled: true
+
+      # Selector labels to add to the ServiceMonitor.
+      # When empty, defaults to:
+      #  release: prometheus
+      selectors: {}
+
+      # Interval at which Prometheus scrapes metrics
+      interval: 30s
+
+      # Timeout for Prometheus scrapes
+      scrapeTimeout: 10s
+
+    prometheusRules:
+        # The Prometheus operator *must* be installed before enabling this feature,
+        # if not the chart will fail to install due to missing CustomResourceDefinitions
+        # provided by the operator.
+
+        # Deploy the PrometheusRule custom resource for AlertManager based alerts.
+        # Requires that AlertManager is properly deployed.
+        enabled: true
+
+        # Selector labels to add to the PrometheusRules.
+        # When empty, defaults to:
+        #  release: prometheus
+        selectors: {}
+
+        # Some example rules.
+        # rules: []
+        #  - alert: vault-HighResponseTime
+        #    annotations:
+        #      message: The response time of Vault is over 500ms on average over the last 5 minutes.
+        #    expr: vault_core_handle_request{quantile="0.5", namespace="mynamespace"} > 500
+        #    for: 5m
+        #    labels:
+        #      severity: warning
+        #  - alert: vault-HighResponseTime
+        #    annotations:
+        #      message: The response time of Vault is over 1s on average over the last 5 minutes.
+        #    expr: vault_core_handle_request{quantile="0.5", namespace="mynamespace"} > 1000
+        #    for: 5m
+        #    labels:
+        #      severity: critical
+        rules:
+          - alert: vault-HighResponseTime
+            annotations:
+              message: The response time of Vault is over 500ms on average over the last 5 minutes.
+            expr: vault_core_handle_request{quantile="0.5", namespace=~".*"} > 500
+            for: 5m
+            labels:
+              severity: warning
+          - alert: vault-HighResponseTime
+            annotations:
+              message: The response time of Vault is over 1s on average over the last 5 minutes.
+            expr: vault_core_handle_request{quantile="0.5", namespace=~".*"} > 1000
+            for: 5m
+            labels:
+              severity: critical

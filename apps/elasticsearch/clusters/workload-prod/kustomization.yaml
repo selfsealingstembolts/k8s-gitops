@@ -1,0 +1,105 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - certificates.yaml
+  # - ingress.yaml
+
+components:
+  - ../../components/elasticsearch
+  - ../../components/kibana
+  # - ../../components/fleet
+  # - ../../components/kubernetes-agent
+  # - ../../components/pfsense-agent
+  # - ../../components/external-agent
+  # - ../../components/uptime-agent
+  # - ../../components/syslog-agent
+
+patches:
+  - target:
+      kind: Elasticsearch
+      name: elasticsearch
+      namespace: elastic
+    patch: |-
+      - op: replace
+        path: "/spec/http/service/metadata/annotations/external-dns.alpha.kubernetes.io~1hostname"
+        value: es.k8s.example.com
+      - op: replace
+        path: "/spec/nodeSets/0/volumeClaimTemplates/0/spec/resources/requests/storage"
+        value: 16Gi
+      - op: replace
+        path: "/spec/nodeSets/0/volumeClaimTemplates/0/spec/storageClassName"
+        value: truenas-iscsi-csi
+      - op: add
+        path: "/spec/nodeSets/0/podTemplate/spec/nodeSelector"
+        value:
+          storageType: slow
+      - op: replace
+        path: "/spec/nodeSets/1/volumeClaimTemplates/0/spec/resources/requests/storage"
+        value: 256Gi
+      - op: replace
+        path: "/spec/nodeSets/1/volumeClaimTemplates/0/spec/storageClassName"
+        value: openebs-lvm
+      - op: add
+        path: "/spec/nodeSets/1/podTemplate/spec/nodeSelector"
+        value:
+          storageType: fast
+
+  - target:
+      kind: Kibana
+      name: kibana
+      namespace: elastic
+    patch: |-
+      apiVersion: kibana.k8s.elastic.co/v1
+      kind: Kibana
+      metadata:
+        name: kibana
+        namespace: elastic
+      spec:
+        config:
+          server:
+            publicBaseUrl: https://kibana.k8s.example.com
+          xpack:
+            fleet:
+              agents:
+                elasticsearch:
+                  hosts:
+                    - https://es.k8s.example.com:9200
+                fleet_server:
+                  hosts:
+                    - https://fleet.k8s.example.com:8220
+        http:
+          service:
+            metadata:
+              annotations:
+                external-dns.alpha.kubernetes.io/hostname: kibana.k8s.example.com
+            spec:
+              type: LoadBalancer
+              allocateLoadBalancerNodePorts: true
+              externalTrafficPolicy: Cluster
+              ports:
+                - name: https
+                  port: 443
+                  protocol: TCP
+                  targetPort: 5601
+
+  # - target:
+  #     kind: Agent
+  #     name: fleet-server
+  #     namespace: elastic
+  #   patch: |-
+  #     - op: replace
+  #       path: "/spec/http/service/metadata/annotations/external-dns.alpha.kubernetes.io~1hostname"
+  #       value: fleet.k8s.example.com
+
+  # # Debug logging for ECK operator
+  # - target:
+  #     kind: StatefulSet
+  #     name: elastic-operator
+  #     namespace: elastic-system
+  #   patch: |-
+  #     - op: add
+  #       path: "/spec/template/spec/containers/0/args/-"
+  #       value: --log-verbosity=2

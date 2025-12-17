@@ -1,0 +1,108 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: git-webhook
+spec:
+  template:
+    serviceAccountName: operate-workflow-sa
+  dependencies:
+    - name: containers
+      eventSourceName: webhook
+      eventName: gitea
+      filters:
+        data:
+          - path: body.repository.full_name
+            type: string
+            value:
+              - "containers"
+          - path: header.X-Github-Event
+            type: string
+            value:
+              - "push"
+          - path: body.ref
+            type: string
+            value:
+              - "refs/heads/main"
+    - name: butane
+      eventSourceName: webhook
+      eventName: gitea
+      filters:
+        data:
+          - path: body.repository.full_name
+            type: string
+            value:
+              - "butane"
+          - path: header.X-Github-Event
+            type: string
+            value:
+              - "push"
+          - path: body.ref
+            type: string
+            value:
+              - "refs/heads/stable"
+              - "refs/heads/dev"
+  triggers:
+    - template:
+        conditions: "containers || butane"
+        name: wf-ci-containers-trigger
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: wf-ci-container-
+              spec:
+                arguments:
+                  parameters:
+                    - name: repo
+                    - name: revision
+                    - name: branch
+                    - name: payload
+                workflowTemplateRef:
+                  name: ci-container
+          parameters:
+            - src:
+                dependencyName: containers
+                dataKey: body.repository.clone_url
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: containers
+                dataKey: body.after
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: containers
+                dataTemplate: '{{ (.Input.body.ref | splitn "/" 3)._2 }}'
+              dest: spec.arguments.parameters.2.value
+            - src:
+                dependencyName: containers
+                dataKey: body
+              dest: spec.arguments.parameters.3.value
+            - src:
+                dependencyName: containers
+                dataTemplate: "{{ .Input.body.repository.name }}-{{ .Input.body.after | substr 0 7 }}-"
+              dest: metadata.generateName
+              operation: append
+            - src:
+                dependencyName: butane
+                dataKey: body.repository.clone_url
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: butane
+                dataKey: body.after
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: butane
+                dataTemplate: '{{ (.Input.body.ref | splitn "/" 3)._2 }}'
+              dest: spec.arguments.parameters.2.value
+            - src:
+                dependencyName: butane
+                dataKey: body
+              dest: spec.arguments.parameters.3.value
+            - src:
+                dependencyName: butane
+                dataTemplate: "{{ .Input.body.repository.name }}-{{ .Input.body.after | substr 0 7 }}-"
+              dest: metadata.generateName
+              operation: append

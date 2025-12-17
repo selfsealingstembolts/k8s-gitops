@@ -1,0 +1,192 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    ":disableRateLimiting",
+    "local>renovate-presets/renovate-config:global-default",
+    "local>renovate-presets/renovate-config:automerge"
+  ],
+  "enabledManagers": [
+    "kustomize",
+    "helm-values",
+    "custom.regex"
+  ],
+  "ignorePaths": [
+    "**/rendered-manifest.yaml"
+  ],
+  "gitIgnoredAuthors": [
+    "gitlab-ci@gitlab.example.com"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "datasourceTemplate": "helm",
+      "fileMatch": [
+        "(^|/)chart\\.yaml$"
+      ],
+      "matchStrings": [
+        "name:\\s+(?<depName>.*?)\\s+repo:\\s+(?<registryUrl>[^\\s]+?)\\s+version:\\s+[\"']?(?<currentValue>[\\w+\\.\\-]*)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "datasourceTemplate": "helm",
+      "fileMatch": [
+        "\\.yaml$"
+      ],
+      "matchStrings": [
+        "#\\s*renovate: name=(?<depName>.*?)\\s+repo=(?<registryUrl>[^\\s]+?)\\s+version:\\s+[\"']?(?<currentValue>[\\w+\\.\\-]*)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "datasourceTemplate": "docker",
+      "fileMatch": [
+        "\\.yaml$"
+      ],
+      "matchStrings": [
+        "#\\s*renovate: image=(?<depName>.*?)\\s+(?:\\S*_)?(image|value):\\s*[\"']?\\S*:(?<currentValue>[\\w+\\.\\-]*)",
+        "#\\s*renovate: image=(?<depName>.*?)\\s+(?:\\S*_)?(tag|version|value):\\s*[\"']?(?<currentValue>[\\w+\\.\\-]*)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "datasourceTemplate": "github-releases",
+      "fileMatch": [
+        "(^|/)kustomization\\.yaml$"
+      ],
+      "matchStrings": [
+        "https://github\\.com/(?<depName>.*/.*?)/releases/download/(?<currentValue>.*?)/"
+      ]
+    },
+    {
+      "customType": "regex",
+      "datasourceTemplate": "github-tags",
+      "fileMatch": [
+        "\\.yaml$"
+      ],
+      "matchStrings": [
+        "https://raw\\.githubusercontent\\.com/(?<depName>[^/]*/[^/]*)/(?<currentValue>.*?)/"
+      ]
+    },
+    {
+      "customType": "regex",
+      "datasourceTemplate": "github-releases",
+      "fileMatch": [
+        "^apps/cloudnative-pg/base/kustomization\\.yaml$"
+      ],
+      "matchStrings": [
+        "https://github\\.com/(?<depName>.*/.*?)/releases/download/v(?<currentValue>.*?)/cnpg-.*\\.yaml"
+      ],
+      "autoReplaceStringTemplate": "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/v{{newValue}}/cnpg-{{newValue}}.yaml"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "linuxserver/prowlarr"
+      ],
+      "versioning": "regex:^(?<major>\\d{1})\\.(?<minor>\\d{1})\\.(?<patch>\\d{1})$",
+      "sourceUrl": "https://github.com/Prowlarr/Prowlarr"
+    },
+    {
+      "matchPackageNames": [
+        "linuxserver/bookstack"
+      ],
+      "versioning": "regex:^(?<major>\\d{2})\\.(?<minor>\\d{2})\\.(?<patch>\\d{1})$",
+      "sourceUrl": "https://github.com/BookStackApp/Bookstack"
+    },
+    {
+      "matchPackageNames": [
+        "linuxserver/sonarr"
+      ],
+      "versioning": "regex:^(?<compatibility>\\w+)-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)$",
+      "sourceUrl": "https://github.com/Sonarr/Sonarr"
+    },
+    {
+      "matchPackageNames": [
+        "/^altran1502/immich-.*$/"
+      ],
+      "groupName": "altran1502/immich"
+    },
+    {
+      "matchPackageNames": [
+        "/.*ansible/awx-operator$/"
+      ],
+      "groupName": "ansible/awx-operator"
+    },
+    {
+      "matchPackageNames": [
+        "victoriametrics/operator"
+      ],
+      "sourceUrl": "https://github.com/VictoriaMetrics/operator"
+    },
+    {
+      "matchPackageNames": [
+        "registry.k8s.io/sig-storage/csi-provisioner"
+      ],
+      "sourceUrl": "https://github.com/kubernetes-csi/external-provisioner"
+    },
+    {
+      "matchPackageNames": [
+        "/.*hashicorp/vault$/"
+      ],
+      "groupName": "hashicorp/vault",
+      "sourceUrl": "https://github.com/hashicorp/vault"
+    },
+    {
+      "matchPackageNames": [
+        "/.*hashicorp/vault-k8s$/"
+      ],
+      "groupName": "hashicorp/vault-k8s",
+      "sourceUrl": "https://github.com/hashicorp/vault-k8s"
+    },
+    {
+      "matchPackageNames": [
+        "/.*argoproj/argo-?cd$/"
+      ],
+      "groupName": "argoproj/argocd"
+    },
+    {
+      "matchPackageNames": [
+        "sibbl/hass-lovelace-kindle-screensaver"
+      ],
+      "sourceUrl": "https://github.com/sibbl/hass-lovelace-kindle-screensaver"
+    },
+    {
+      "matchPackageNames": [
+        "hkotel/mealie"
+      ],
+      "sourceUrl": "https://github.com/mealie-recipes/mealie"
+    },
+    {
+      "matchPackageNames": [
+        "/.*/renovate/"
+      ],
+      "automerge": true
+    },
+    {
+      "matchPackageNames": [
+        "/.*/external-dns$/"
+      ],
+      "groupName": "kubernetes-sigs/external-dns"
+    },
+    {
+      "matchPackageNames": [
+        "/(.*/)?cilium$/"
+      ],
+      "groupName": "cilium/cilium"
+    },
+    {
+      "matchPackageNames": [
+        "/(.*)?keycloak(.*)?/"
+      ],
+      "groupName": "keycloak"
+    },
+    {
+      "matchPackageNames": [
+        "/(.*/)?argoproj/argo(-workflows|-workflow-controller|cli|exec)/"
+      ],
+      "groupName": "argo-workflows"
+    }
+  ]
+}

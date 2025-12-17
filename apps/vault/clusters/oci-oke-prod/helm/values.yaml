@@ -1,0 +1,92 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-chart
+valuesInline:
+
+  server:
+
+    extraEnvironmentVars:
+      VAULT_TLS_SERVER_NAME: "vault.oci.example.com"
+
+    dataStorage:
+      size: 1Gi
+      storageClass: longhorn
+
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: "freeipa-acme-issuer"
+        nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+        nginx.ingress.kubernetes.io/secure-backends: "true"
+      ingressClassName: "ingress-nginx-private"
+      pathType: Prefix
+      activeService: true
+      hosts:
+      - host: vault.oci.example.com
+      tls:
+      - secretName: vault-tls-ingress
+        hosts:
+          - vault.oci.example.com
+
+    ha:
+      replicas: 3
+
+      raft:
+        config: |
+          ui = true
+
+          listener "tcp" {
+            tls_disable     = "false"
+            address         = "[::]:8200"
+            cluster_address = "[::]:8201"
+            tls_cert_file   = "/vault/userconfig/tls-server/tls.crt"
+            tls_key_file    = "/vault/userconfig/tls-server/tls.key"
+            tls_client_ca_file = "/vault/userconfig/tls-ca/ca.crt"
+          }
+          seal "ocikms" {
+            auth_type_api_key   = false
+            crypto_endpoint     = ""
+            key_id              = ""
+            management_endpoint = ""
+          }
+
+          storage "raft"{
+              path = "/vault/data"
+
+              retry_join {
+                leader_api_addr = "https://vault-0.vault-internal:8200"
+                leader_ca_cert_file = "/vault/userconfig/tls-ca/ca.crt"
+                leader_client_cert_file = "/vault/userconfig/tls-server/tls.crt"
+                leader_client_key_file = "/vault/userconfig/tls-server/tls.key"
+                leader_tls_servername = "vault.oci.example.com"
+              }
+              retry_join {
+                leader_api_addr = "https://vault-1.vault-internal:8200"
+                leader_ca_cert_file = "/vault/userconfig/tls-ca/ca.crt"
+                leader_client_cert_file = "/vault/userconfig/tls-server/tls.crt"
+                leader_client_key_file = "/vault/userconfig/tls-server/tls.key"
+                leader_tls_servername = "vault.oci.example.com"
+              }
+              retry_join {
+                leader_api_addr = "https://vault-2.vault-internal:8200"
+                leader_ca_cert_file = "/vault/userconfig/tls-ca/ca.crt"
+                leader_client_cert_file = "/vault/userconfig/tls-server/tls.crt"
+                leader_client_key_file = "/vault/userconfig/tls-server/tls.key"
+                leader_tls_servername = "vault.oci.example.com"
+              }
+
+              autopilot {
+                cleanup_dead_servers = "true"
+                last_contact_threshold = "200ms"
+                last_contact_failure_threshold = "10m"
+                max_trailing_logs = 250
+                min_quorum = 5
+                server_stabilization_time = "10s"
+              }
+
+            }
+
+
+          service_registration "kubernetes" {}

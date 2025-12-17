@@ -1,0 +1,7 @@
+---
+type: s3
+config:
+  bucket: thanos
+  endpoint: endpoint
+  access_key: access-key
+  secret_key: secret-key

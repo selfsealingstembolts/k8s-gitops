@@ -1,0 +1,30 @@
+---
+# Vikunja needs to know the frontend URL for password reset emails.
+# So you might need to provide its value, if you're not using an ingress.
+service:
+  frontendUrl: https://vikunja.k8s.example.com
+
+database:
+  type: postgres
+
+cors:
+  enable: true
+  origins: "https://vikunja.k8s.example.com"
+
+keyvalue:
+  type: "redis"
+
+auth:
+  openid:
+    enabled: true
+    providers:
+      - name: Keycloak
+        authurl: https://keycloak.k8s.example.com/realms/example
+
+typesense:
+  enabled: true
+  url: "vikunja:8108"
+
+redis:
+  enabled: true
+  host: "redis.redis.svc.cluster.local:6379"

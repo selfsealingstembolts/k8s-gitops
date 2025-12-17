@@ -1,0 +1,10 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: cilium-chart
+valuesInline:
+
+  hubble:
+    # -- Enable Hubble (true by default).
+    enabled: true

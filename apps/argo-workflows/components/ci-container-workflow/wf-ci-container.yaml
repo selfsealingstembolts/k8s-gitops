@@ -1,0 +1,20 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: wf-ci-container-
+  annotations:
+    workflows.argoproj.io/workflow-template: ci-container
+spec:
+  arguments:
+    parameters:
+      - name: repo
+        value: "containers"
+      - name: revision
+        value: "main"
+      - name: config
+        value: ".argo-ci.yaml"
+      - name: path
+        value: "/src"
+  workflowTemplateRef:
+    name: ci-container

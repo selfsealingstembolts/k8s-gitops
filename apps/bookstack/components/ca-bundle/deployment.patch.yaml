@@ -1,0 +1,34 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookstack
+spec:
+  template:
+    spec:
+      containers:
+        - name: bookstack
+          volumeMounts:
+            - name: ca-certificates-crt
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              subPath: ca-certificates.crt
+              readOnly: true
+            - name: ca-crt
+              mountPath: /etc/ssl/certs/ca.crt
+              subPath: ca.crt
+              readOnly: true
+      volumes:
+        - name: ca-certificates-crt
+          configMap:
+            name: ca-bundle
+            defaultMode: 444
+            items:
+              - key: ca.crt
+                path: ca-certificates.crt
+        - name: ca-crt
+          configMap:
+            name: ca-bundle
+            defaultMode: 444
+            items:
+              - key: ca.crt
+                path: ca.crt

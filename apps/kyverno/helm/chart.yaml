@@ -1,0 +1,24 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kyverno-chart
+name: kyverno
+repo: https://kyverno.github.io/kyverno
+version: 3.6.1
+releaseName: kyverno
+namespace: kyverno
+includeCRDs: true
+valuesInline:
+  config:
+    # -- Preserve the configmap settings during upgrade.
+    preserve: false
+
+    # -- Defines labels to set on webhook configurations.
+    webhookLabels:
+      # Example to adopt webhook resources in ArgoCD
+      'argocd.argoproj.io/instance': 'kyverno'
+
+    # -- Exclude Kyverno namespace
+    # Determines if default Kyverno namespace exclusion is enabled for webhooks and resourceFilters
+    excludeKyvernoNamespace: true

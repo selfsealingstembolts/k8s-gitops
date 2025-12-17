@@ -1,0 +1,217 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: cilium-chart
+valuesInline:
+  hubble:
+    # -- Hubble metrics configuration.
+    # See https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics
+    # for more comprehensive documentation about Hubble metrics.
+    metrics:
+      # -- Configures the list of metrics to collect. If empty or null, metrics
+      # are disabled.
+      # Example:
+      #
+      #   enabled:
+      #   - dns:query;ignoreAAAA
+      #   - drop
+      #   - tcp
+      #   - flow
+      #   - icmp
+      #   - http
+      #
+      # You can specify the list of metrics from the helm CLI:
+      #
+      #   --set hubble.metrics.enabled="{dns:query;ignoreAAAA,drop,tcp,flow,icmp,http}"
+      #
+      # enabled: ~
+      enabled:
+        - dns:query;ignoreAAAA
+        - drop
+        - tcp
+        - flow
+        - icmp
+        - http
+      # -- Enables exporting hubble metrics in OpenMetrics format.
+      enableOpenMetrics: false
+      # -- Configure the port the hubble metric server listens on.
+      port: 9965
+      # -- Annotations to be added to hubble-metrics service.
+      serviceAnnotations: {}
+      serviceMonitor:
+        # -- Create ServiceMonitor resources for Prometheus Operator.
+        # This requires the prometheus CRDs to be available.
+        # ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+        enabled: true
+        # -- Labels to add to ServiceMonitor hubble
+        labels: {}
+        # -- Annotations to add to ServiceMonitor hubble
+        annotations: {}
+        # -- jobLabel to add for ServiceMonitor hubble
+        jobLabel: ""
+        # -- Interval for scrape metrics.
+        interval: "10s"
+        # -- Relabeling configs for the ServiceMonitor hubble
+        relabelings:
+          - sourceLabels:
+              - __meta_kubernetes_pod_node_name
+            targetLabel: node
+            replacement: ${1}
+        # -- Metrics relabeling configs for the ServiceMonitor hubble
+        metricRelabelings: ~
+      # -- Grafana dashboards for hubble
+      # grafana can import dashboards based on the label and value
+      # ref: https://github.com/grafana/helm-charts/tree/main/charts/grafana#sidecar-for-dashboards
+      dashboards:
+        enabled: false
+        label: grafana_dashboard
+        namespace: ~
+        labelValue: "1"
+        annotations: {}
+
+    relay:
+      # -- Enable prometheus metrics for hubble-relay on the configured port at
+      # /metrics
+      prometheus:
+        enabled: true
+        port: 9966
+        serviceMonitor:
+          # -- Enable service monitors.
+          # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+          enabled: true
+          # -- Labels to add to ServiceMonitor hubble-relay
+          labels: {}
+          # -- Annotations to add to ServiceMonitor hubble-relay
+          annotations: {}
+          # -- Interval for scrape metrics.
+          interval: "10s"
+          # -- Specify the Kubernetes namespace where Prometheus expects to find
+          # service monitors configured.
+          # namespace: ""
+          # -- Relabeling configs for the ServiceMonitor hubble-relay
+          relabelings: ~
+          # -- Metrics relabeling configs for the ServiceMonitor hubble-relay
+          metricRelabelings: ~
+
+  # -- Configure prometheus metrics on the configured port at /metrics
+  prometheus:
+    enabled: true
+    port: 9962
+    serviceMonitor:
+      # -- Enable service monitors.
+      # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+      enabled: true
+      # -- Labels to add to ServiceMonitor cilium-agent
+      labels: {}
+      # -- Annotations to add to ServiceMonitor cilium-agent
+      annotations: {}
+      # -- jobLabel to add for ServiceMonitor cilium-agent
+      jobLabel: ""
+      # -- Interval for scrape metrics.
+      interval: "10s"
+      # -- Specify the Kubernetes namespace where Prometheus expects to find
+      # service monitors configured.
+      # namespace: ""
+      # -- Relabeling configs for the ServiceMonitor cilium-agent
+      relabelings:
+        - sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: node
+          replacement: ${1}
+      # -- Metrics relabeling configs for the ServiceMonitor cilium-agent
+      metricRelabelings: ~
+      # -- Set to `true` and helm will not check for monitoring.coreos.com/v1 CRDs before deploying
+      trustCRDsExist: true
+
+    # -- Metrics that should be enabled or disabled from the default metric list.
+    # The list is expected to be separated by a space. (+metric_foo to enable
+    # metric_foo , -metric_bar to disable metric_bar).
+    # ref: https://docs.cilium.io/en/stable/observability/metrics/
+    metrics: ~
+
+    # --- Enable controller group metrics for monitoring specific Cilium
+    # subsystems. The list is a list of controller group names. The special
+    # values of "all" and "none" are supported. The set of controller
+    # group names is not guaranteed to be stable between Cilium versions.
+    controllerGroupMetrics:
+      - write-cni-file
+      - sync-host-ips
+      - sync-lb-maps-with-k8s-services
+
+  # -- Grafana dashboards for cilium-agent
+  # grafana can import dashboards based on the label and value
+  # ref: https://github.com/grafana/helm-charts/tree/main/charts/grafana#sidecar-for-dashboards
+  dashboards:
+    enabled: false
+    label: grafana_dashboard
+    namespace: ~
+    labelValue: "1"
+    annotations: {}
+
+  envoy:
+    # -- Configure Cilium Envoy Prometheus options.
+    # Note that some of these apply to either cilium-agent or cilium-envoy.
+    prometheus:
+      # -- Enable prometheus metrics for cilium-envoy
+      enabled: true
+      serviceMonitor:
+        # -- Enable service monitors.
+        # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+        # Note that this setting applies to both cilium-envoy _and_ cilium-agent
+        # with Envoy enabled.
+        enabled: true
+        # -- Labels to add to ServiceMonitor cilium-envoy
+        labels: {}
+        # -- Annotations to add to ServiceMonitor cilium-envoy
+        annotations: {}
+        # -- Interval for scrape metrics.
+        interval: "10s"
+        # -- Specify the Kubernetes namespace where Prometheus expects to find
+        # service monitors configured.
+        # namespace: ""
+        # -- Relabeling configs for the ServiceMonitor cilium-envoy
+        # or for cilium-agent with Envoy configured.
+        relabelings:
+          - sourceLabels:
+              - __meta_kubernetes_pod_node_name
+            targetLabel: node
+            replacement: ${1}
+        # -- Metrics relabeling configs for the ServiceMonitor cilium-envoy
+        # or for cilium-agent with Envoy configured.
+        metricRelabelings: ~
+      # -- Serve prometheus metrics for cilium-envoy on the configured port
+      port: "9964"
+
+  operator:
+    # -- Enable prometheus metrics for cilium-operator on the configured port at
+    # /metrics
+    prometheus:
+      enabled: true
+      port: 9963
+      serviceMonitor:
+        # -- Enable service monitors.
+        # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+        enabled: true
+        # -- Labels to add to ServiceMonitor cilium-operator
+        labels: {}
+        # -- Annotations to add to ServiceMonitor cilium-operator
+        annotations: {}
+        # -- jobLabel to add for ServiceMonitor cilium-operator
+        jobLabel: ""
+        # -- Interval for scrape metrics.
+        interval: "10s"
+        # -- Relabeling configs for the ServiceMonitor cilium-operator
+        relabelings: ~
+        # -- Metrics relabeling configs for the ServiceMonitor cilium-operator
+        metricRelabelings: ~
+
+    # -- Grafana dashboards for cilium-operator
+    # grafana can import dashboards based on the label and value
+    # ref: https://github.com/grafana/helm-charts/tree/main/charts/grafana#sidecar-for-dashboards
+    dashboards:
+      enabled: false
+      label: grafana_dashboard
+      namespace: ~
+      labelValue: "1"
+      annotations: {}

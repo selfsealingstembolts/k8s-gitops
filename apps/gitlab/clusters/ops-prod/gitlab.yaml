@@ -1,0 +1,243 @@
+---
+apiVersion: apps.gitlab.com/v1beta1
+kind: GitLab
+metadata:
+  name: gitlab
+spec:
+  chart:
+    # renovate: name=gitlab repo=https://charts.gitlab.io
+    version: "9.3.1"
+    values:
+      certmanager:
+        install: false
+      postgresql:
+        install: false
+      prometheus:
+        install: false
+      global:
+        certificates:
+          customCAs:
+            - configMap: ca-bundle
+              keys:
+                - ca.crt
+        hosts:
+          domain: k8s.example.com
+          https: true
+          gitlab:
+            name: gitlab.k8s.example.com
+            https: true
+          registry:
+            name: registry.k8s.example.com
+            https: true
+          pages:
+            name: pages.k8s.example.com
+            https: true
+          kas:
+            name: kas.k8s.example.com
+            https: true
+          ssh: git.k8s.example.com
+        monitoring:
+          enabled: true
+        ingress:
+          enabled: true
+          configureCertmanager: false
+          provider: nginx
+          class: nginx
+          annotations:
+            cert-manager.io/cluster-issuer: vault-issuer
+            nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        psql:
+          serviceName: gitlab-cnpg-cluster-rw
+          port: 5432
+          database: gitlab
+          username: gitlab
+          password:
+            useSecret: true
+            secret: gitlab-postgres-secret
+            key: postgresql-postgres-password
+        minio:
+          enabled: false
+        appConfig:
+          object_store:
+            enabled: true
+            proxy_download: true
+            connection:
+              secret: gitlab-objectstore-connection
+              key: connection
+          lfs:
+            enabled: true
+            bucket: "gitlab/git-lfs"
+          artifacts:
+            enabled: true
+            bucket: "gitlab/artifacts"
+          uploads:
+            enabled: true
+            bucket: "gitlab/uploads"
+          packages:
+            enabled: true
+            bucket: "gitlab/packages"
+          externalDiffs:
+            bucket: "gitlab/mr-diffs"
+          terraformState:
+            enabled: true
+            bucket: "gitlab/terraform-state"
+          ciSecureFiles:
+            enabled: true
+            bucket: "gitlab/ci-secure-files"
+          dependencyProxy:
+            enabled: true
+            bucket: "gitlab/dependency-proxy"
+          backups:
+            bucket: "gitlab-backups"
+            tmpBucket: "gitlab-tmp-backups"
+          ldap:
+            preventSignin: false
+            servers:
+              main:
+                label: 'FreeIPA'
+                hosts: [['ipa0.idm.example.com', 389], ['ipa1.idm.example.com', 389]]
+                uid: 'uid'
+                bind_dn: 'uid=gitlab,cn=sysaccounts,cn=etc,dc=idm,dc=example,dc=com'
+                base: 'dc=idm,dc=example,dc=com'
+                password:
+                  secret: gitlab-ldap
+                  key: bind-password
+                encryption: 'start_tls'
+                tls_options:
+                  ca_file: '/etc/ssl/certs/ca.pem'
+                active_directory: false
+                user_filter: '(memberOf=cn=gitlab-users,cn=groups,cn=accounts,dc=idm,dc=example,dc=com)'
+        pages:
+          enabled: false
+          host: pages.k8s.example.com
+        email:
+          display_name: 'GitLab'
+          from: 'gitlab@example.com'
+          reply_to: 'noreply@example.com'
+        smtp:
+          enabled: true
+          address: 'mail.prod.example.com'
+          tls: false
+          authentication: ''
+        shell:
+          tcp:
+            proxyProtocol: false
+        registry:
+          enabled: true
+          bucket: "gitlab-registry"
+
+      nginx-ingress:
+        enabled: false
+
+      gitlab:
+        gitaly:
+          persistence:
+            enabled: true
+            storageClass: truenas-iscsi-slow-csi
+            accessMode: ReadWriteOnce
+            size: 100Gi
+        gitlab-exporter:
+          enabled: true
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+        gitlab-pages:
+          enabled: false
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+        gitlab-shell:
+          enabled: true
+          sshDaemon: gitlab-sshd
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+          config:
+            proxyProtocol: false
+            proxyPolicy: "use"
+          service:
+            type: LoadBalancer
+            annotations:
+              external-dns.alpha.kubernetes.io/hostname: git.k8s.example.com
+        kas:
+          enabled: true
+          ingress:
+            tls:
+              secretName: gitlab-kas-tls
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+        mailroom:
+          enabled: false
+        migrations:
+          enabled: true
+        sidekiq:
+          enabled: true
+          metrics:
+            enabled: true
+            podMonitor:
+              enabled: true
+        toolbox:
+          enabled: true
+          backups:
+            cron:
+              enabled: false
+              schedule: "17 2 * * *"
+            objectStorage:
+              backend: s3
+              config:
+                secret: gitlab-toolbox-objectstore
+                key: config
+          persistence:
+            enabled: true
+            accessMode: 'ReadWriteOnce'
+            size: '10Gi'
+            storageClass: truenas-nfs-csi
+        webservice:
+          enabled: true
+          ingress:
+            tls:
+              secretName: gitlab-webservice-tls
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+      registry:
+        enabled: true
+        ingress:
+          tls:
+            secretName: gitlab-registry-tls
+        storage:
+          secret: gitlab-registry-minio
+          key: config
+        metrics:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+        database:
+          enabled: true
+          host: registry-cnpg-cluster-rw
+          name: registry
+          user: registry
+          password:
+            secret: registry-cnpg-secret
+            key: password
+          migrations:
+            enabled: true
+        gc:
+          disabled: false
+        redis:
+          cache:
+            enabled: true
+            password:
+              enabled: true
+              secret: gitlab-redis-secret
+              key: secret
+
+        maintenance:
+          readonly:
+            enabled: false

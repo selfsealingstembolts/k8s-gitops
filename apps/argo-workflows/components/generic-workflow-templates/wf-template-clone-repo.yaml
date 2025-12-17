@@ -1,0 +1,40 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: clone-repo
+  annotations:
+    workflows.argoproj.io/description: >-
+      Clones a git repository using input artifacts
+spec:
+  entrypoint: main
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: clone
+            template: clone
+
+    - name: clone
+      container:
+        # renovate: image=busybox
+        image: busybox:1.37.0
+        command: [echo, "Cloning branch {{workflow.parameters.revision}} of repo at {{workflow.parameters.repo}}"]
+      inputs:
+        artifacts:
+          - name: source
+            path: "{{workflow.parameters.path}}"
+            git:
+              repo: "{{workflow.parameters.repo}}"
+              revision: "{{workflow.parameters.revision}}"
+              depth: 1
+              usernameSecret:
+                name: "{{workflow.parameters.git-secret}}"
+                key: git-username
+              passwordSecret:
+                name: "{{workflow.parameters.git-secret}}"
+                key: git-password
+      outputs:
+        artifacts:
+          - name: source
+            path: "{{workflow.parameters.path}}"

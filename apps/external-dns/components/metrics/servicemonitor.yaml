@@ -1,0 +1,15 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: external-dns-monitor
+  labels:
+    app: external-dns
+spec:
+  jobLabel: app
+  endpoints:
+    - port: http
+      path: /metrics
+  selector:
+    matchLabels:
+      app: external-dns

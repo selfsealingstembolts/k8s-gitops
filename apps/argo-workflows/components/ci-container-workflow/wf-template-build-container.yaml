@@ -1,0 +1,53 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: build-container
+  annotations:
+    workflows.argoproj.io/description: >-
+      Build a container image with kaniko
+spec:
+  entrypoint: main
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: build
+            template: build
+
+    - name: build
+      container:
+        # renovate: image=gcr.io/kaniko-project/executor
+        image: gcr.io/kaniko-project/executor:v1.24.0-debug
+        command: [sh, -c]
+        args:
+          - "mv /var /var-orig && /kaniko/executor {{inputs.parameters.args}} --cache=true --push-retry=3 --compressed-caching=false --snapshot-mode=full --ignore-var-run=true --registry-certificate=harbor.k8s.example.com=/kaniko/ssl/certs/ca.crt"
+        env:
+          - name: DOCKER_CONFIG
+            value: /.docker
+        volumeMounts:
+          - name: registry-auth
+            mountPath: /.docker
+            readOnly: true
+          - name: ca-bundle
+            mountPath: /kaniko/ssl/certs/ca.crt
+            subPath: ca.crt
+            readOnly: true
+        # https://github.com/GoogleContainerTools/kaniko/issues/2201
+        securityContext:
+          capabilities:
+            add: ["CHOWN", "DAC_OVERRIDE","FOWNER","SETFCAP","SETGID","SETUID"]
+      inputs:
+        parameters:
+          - name: args
+        artifacts:
+          - name: source
+            path: "{{workflow.parameters.path}}"
+      volumes:
+        - name: registry-auth
+          secret:
+            secretName: "{{workflow.parameters.registry-auth-secret}}"
+            defaultMode: 0400
+        - name: ca-bundle
+          configMap:
+            name: "{{workflow.parameters.ca-bundle-configmap}}"

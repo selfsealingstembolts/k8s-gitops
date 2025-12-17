@@ -1,0 +1,4 @@
+---
+cluster:
+  name: workload-prod
+  address: https://workload-prod.k8s.example.com:6443

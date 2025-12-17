@@ -1,0 +1,25 @@
+---
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: freeipa-bundle
+spec:
+  sources:
+  - secret:
+      name: "freeipa-ca"
+      key: "ca.crt"
+  target:
+    configMap:
+      key: "ca.crt"
+      metadata:
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"
+        labels:
+          app.kubernetes.io/component: "trust-bundle"
+    secret:
+      key: "ca.crt"
+      metadata:
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"
+        labels:
+          app.kubernetes.io/component: "trust-bundle"

@@ -1,0 +1,17 @@
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VLogs
+metadata:
+  name: vm-stack
+spec:
+  retentionPeriod: "30d"
+  image:
+    # renovate: datasource=docker depName=victoriametrics/victoria-logs versioning=docker
+    tag: v1.0.0-victorialogs-scratch
+  storage:
+    accessModes:
+      - "ReadWriteOnce"
+    resources:
+      requests:
+        storage: 100Gi
+    storageClassName: default

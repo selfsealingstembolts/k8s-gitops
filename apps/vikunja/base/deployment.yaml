@@ -1,0 +1,131 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vikunja
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: vikunja-api
+          image: vikunja/api:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: vikunja-api-secret
+          ports:
+            - name: http-api
+              containerPort: 3456
+              protocol: TCP
+          volumeMounts:
+            - name: api-config
+              mountPath: /etc/vikunja/config.yml
+              subPath: config.yml
+            - name: api-data
+              mountPath: /app/vikunja/files
+          livenessProbe:
+            httpGet:
+              path: /api/v1/info
+              port: http-api
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 3456
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: 3456
+            initialDelaySeconds: 30
+            failureThreshold: 30
+            timeoutSeconds: 1
+            periodSeconds: 5
+        - name: vikunja-frontend
+          image: vikunja/frontend:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: VIKUNJA_API_URL
+              value: http://vikunja
+          ports:
+            - name: http-frontend
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 30
+            failureThreshold: 30
+            timeoutSeconds: 1
+            periodSeconds: 5
+        - name: vikunja-typesense
+          image: typesense/typesense:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TYPESENSE_DATA_DIR
+              value: /data
+          envFrom:
+            secretRef:
+              name: vikunja-typesense-secret
+          ports:
+            - name: http-typesense
+              containerPort: 8108
+              protocol: TCP
+          volumeMounts:
+            - name: typesense-data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http-typesense
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 8108
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: 8108
+            initialDelaySeconds: 30
+            failureThreshold: 30
+            timeoutSeconds: 1
+            periodSeconds: 5
+      volumes:
+        - name: api-config
+          configMap:
+            name: vikunja-api-config
+        - name: api-data
+          persistentVolumeClaim:
+            claimName: vikunja-api-data
+        - name: typesense-data
+          persistentVolumeClaim:
+            claimName: vikunja-typesense-data

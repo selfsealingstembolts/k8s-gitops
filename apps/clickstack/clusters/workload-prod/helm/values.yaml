@@ -1,0 +1,45 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: clickstack-chart
+valuesInline:
+  global:
+    storageClassName: "truenas-iscsi-slow-csi"
+  hyperdx:
+    frontendUrl: "https://clickstack.k8s.example.com"
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: "vault-issuer"
+        cert-manager.io/common-name: "clickstack.k8s.example.com"
+      host: "clickstack.k8s.example.com"
+      tls:
+        enabled: true
+        secretName: "clickstack-tls"
+    env:
+      - name: BETA_CH_OTEL_JSON_SCHEMA_ENABLED
+        value: "true"
+  mongodb:
+    enabled: true
+    nodeSelector:
+      node-role.kubernetes.io/worker: "true"
+    persistence:
+      enabled: true
+      size: 10Gi
+  clickhouse:
+    enabled: true
+    nodeSelector:
+      node-role.kubernetes.io/worker: "true"
+    persistence:
+      enabled: true
+      dataSize: 100Gi
+      logSize: 10Gi
+    config:
+      clusterCidrs:
+        - "10.247.0.0/16"
+  otel:
+    enabled: true
+    env:
+      - name: OTEL_AGENT_FEATURE_GATE_ARG
+        value: "--feature-gates=clickhouse.json" 

@@ -1,0 +1,12 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: velero-chart
+# valuesInline:
+  # schedules:
+  #   daily:
+  #     template:
+  #       excludedNamespaces:
+  #         - minio-tenant
+  #         - victoriametrics

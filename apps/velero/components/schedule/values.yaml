@@ -1,0 +1,52 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: velero-chart
+valuesInline:
+  # Backup schedules to create.
+  # Eg:
+  # schedules:
+  #   mybackup:
+  #     disabled: false
+  #     labels:
+  #       myenv: foo
+  #     annotations:
+  #       myenv: foo
+  #     schedule: "0 0 * * *"
+  #     useOwnerReferencesInBackup: false
+  #     paused: false
+  #     skipImmediately: false
+  #     template:
+  #       ttl: "240h"
+  #       storageLocation: default
+  #       includedNamespaces:
+  #       - foo
+  #       # See: https://velero.io/docs/v1.14/resource-filtering/#excludes
+  #       excludedNamespaceScopedResources:
+  #       - persistentVolumeClaims
+  #       excludedClusterScopedResources:
+  #       - persistentVolumes
+  schedules:
+    daily:
+      disabled: false
+      labels:
+        backup-type: automatic
+        backup-schedule: daily
+      schedule: "CRON_TZ=America/New_York 43 4 * * *"
+      useOwnerReferencesInBackup: true
+      paused: false
+      skipImmediately: false
+      template:
+        ttl: 720h
+        storageLocation: default
+        includedNamespaces:
+          - '*'
+        includedResources:
+          - '*'
+        excludedResources:
+          - storageclasses.storage.k8s.io
+        includeClusterResources: true
+        snapshotVolumes: true
+        snapshotMoveData: true
+        datamover: velero

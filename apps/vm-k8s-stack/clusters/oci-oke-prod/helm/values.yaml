@@ -1,0 +1,17 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: victoria-metrics-k8s-stack-chart
+valuesInline:
+  vmagent:
+    spec:
+      externalLabels:
+        cluster: oci-oke-prod
+      remoteWrite:
+        - url: https://vm.k8s.example.com/api/v1/write
+          tlsConfig:
+            ca:
+              configMap:
+                name: ca-bundle
+                key: ca.crt

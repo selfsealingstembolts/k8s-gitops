@@ -1,0 +1,14 @@
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: netbox-media
+  labels:
+    app.kubernetes.io/component: netbox
+spec:
+  storageClass: default
+  accessModes:
+  - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: "1Gi"

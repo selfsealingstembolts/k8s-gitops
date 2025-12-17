@@ -1,0 +1,30 @@
+---
+apiVersion: "descheduler/v1alpha2"
+kind: "DeschedulerPolicy"
+profiles:
+  - name: DefaultProfile
+    pluginConfig:
+    - name: "DefaultEvictor"
+    - name: "RemovePodsViolatingInterPodAntiAffinity"
+    - name: "RemoveDuplicates"
+    - name: "LowNodeUtilization"
+      args:
+        thresholds:
+          "cpu" : 30
+          "memory": 30
+          "pods": 30
+        targetThresholds:
+          "cpu" : 60
+          "memory": 60
+          "pods": 40
+        evictableNamespaces:
+          exclude:
+          - "kube-system"
+    plugins:
+      balance:
+        enabled:
+          - "LowNodeUtilization"
+          - "RemoveDuplicates"
+      deschedule:
+        enabled:
+          - "RemovePodsViolatingInterPodAntiAffinity"

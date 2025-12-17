@@ -1,0 +1,100 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namePrefix: netbox-
+
+components:
+  - ../../../../../components/valkey
+
+images:
+  - name: valkey/valkey
+    newTag: 8.1.4
+
+labels:
+  - pairs:
+      app.kubernetes.io/instance: netbox
+      app.kubernetes.io/part-of: netbox
+    includeTemplates: true
+    includeSelectors: true
+
+replacements:
+  - source:
+      kind: StatefulSet
+      name: valkey
+      fieldPath: spec.template.spec.containers.[name=valkey].image
+      options:
+        delimiter: ':'
+        index: 1
+    targets:
+      - select:
+          kind: ConfigMap
+        fieldPaths: &fieldPaths
+          - metadata.labels.[app.kubernetes.io/version]
+        options: &options
+          create: true
+      - select:
+          kind: Secret
+        fieldPaths: *fieldPaths
+        options: *options
+      - select:
+          kind: Service
+        fieldPaths: *fieldPaths
+        options: *options
+      - select:
+          kind: StatefulSet
+        fieldPaths:
+          - metadata.labels.[app.kubernetes.io/version]
+          - spec.template.metadata.labels.[app.kubernetes.io/version]
+        options: *options
+
+  - sourceValue: netbox-valkey
+    targets:
+      - select:
+          kind: PushSecret
+          name: valkey-pushsecret
+        fieldPaths:
+          - spec.data.0.match.remoteRef.remoteKey
+        options:
+          delimiter: '/'
+          index: 2
+      - select:
+          kind: ExternalSecret
+          name: valkey-secret
+        fieldPaths:
+          - spec.data.0.remoteRef.key
+        options:
+          delimiter: '/'
+          index: 2
+  - sourceValue: ops-prod
+    targets:
+      - select:
+          kind: PushSecret
+          name: valkey-pushsecret
+        fieldPaths:
+          - spec.data.0.match.remoteRef.remoteKey
+        options:
+          delimiter: '/'
+          index: 1
+      - select:
+          kind: ExternalSecret
+          name: valkey-secret
+        fieldPaths:
+          - spec.data.0.remoteRef.key
+        options:
+          delimiter: '/'
+          index: 1
+  - sourceValue: truenas-iscsi-csi
+    targets:
+      - select:
+          kind: StatefulSet
+          name: valkey
+        fieldPaths:
+          - spec.volumeClaimTemplates.0.spec.storageClassName
+  - sourceValue: 1Gi
+    targets:
+      - select:
+          kind: StatefulSet
+          name: valkey
+        fieldPaths:
+          - spec.volumeClaimTemplates.0.spec.resources.requests.storage

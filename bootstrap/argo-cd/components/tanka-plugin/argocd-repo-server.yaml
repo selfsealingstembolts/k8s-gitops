@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+spec:
+  template:
+    spec:
+      containers:
+        - name: tanka-cmp
+          command: [/var/run/argocd/argocd-cmp-server]
+          image: grafana/tanka:0.24.0
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+          volumeMounts:
+            - mountPath: /var/run/argocd
+              name: var-files
+            - mountPath: /home/argocd/cmp-server/plugins
+              name: plugins
+            - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+              subPath: plugin.yaml
+              name: tanka-cmp-config
+            - mountPath: /tmp
+              name: cmp-tmp
+      volumes:
+        - configMap:
+            name: tanka-cmp-config
+          name: tanka-cmp-config
+        - emptyDir: {}
+          name: cmp-tmp

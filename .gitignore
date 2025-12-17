@@ -1,0 +1,3 @@
+charts/**/charts/
+hack/vault-config.yaml
+hack/argocd-vault-plugin

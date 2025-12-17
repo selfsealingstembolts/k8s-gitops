@@ -1,0 +1,53 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: renovate-ce
+
+resources:
+  - ../../base
+  - externalsecret.yaml
+  - cnpg
+  - valkey
+
+components:
+  - ../../../../components/ca-bundle
+
+configMapGenerator:
+  - name: renovate-ce-config-js
+    files:
+      - config.js
+  - name: renovate-ce-config
+    envs:
+      - config.env
+
+patches:
+  - target:
+      kind: Ingress
+      name: renovate-ce
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: vault-issuer
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1common-name"
+        value: renovate.k8s.example.com
+      - op: replace
+        path: "/spec/tls/0/hosts/0"
+        value: renovate.k8s.example.com
+      - op: replace
+        path: /spec/rules/0/host
+        value: renovate.k8s.example.com
+  - target:
+      kind: PersistentVolumeClaim
+      name: renovate-ce-cache
+    patch: |-
+      - op: replace
+        path: "/spec/storageClassName"
+        value: truenas-nfs-csi
+      - op: replace
+        path: "/spec/accessModes/0"
+        value: ReadWriteMany
+      - op: replace
+        path: "/spec/resources/requests/storage"
+        value: 10Gi

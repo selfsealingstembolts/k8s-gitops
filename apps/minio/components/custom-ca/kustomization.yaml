@@ -1,0 +1,43 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - certificate.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: minio-operator
+      namespace: minio-operator
+    patch: |-
+      apiVersion: v1/apps
+      kind: Deployment
+      metadata:
+        name: minio-operator
+        namespace: minio-operator
+      spec:
+        template:
+          spec:
+            containers:
+              - name: minio-operator
+                env:
+                  - name: MINIO_CONSOLE_TLS_ENABLE
+                    value: "off"
+                  - name: OPERATOR_STS_AUTO_TLS_ENABLED
+                    value: "off"
+                  - name: OPERATOR_STS_ENABLED
+                    value: "on"
+                volumeMounts:
+                  - mountPath: /tmp/certs
+                    name: tls-certificates
+            volumes:
+              - name: tls-certificates
+                projected:
+                  defaultMode: 420
+                  sources:
+                    - secret:
+                        items:
+                          - key: ca.crt
+                            path: CAs/custom-ca.crt
+                        name: ca-bundle

@@ -1,0 +1,4 @@
+{
+    "repositories": ["orgname/repo","username/repo"],
+    "dryRun" : "true"
+}

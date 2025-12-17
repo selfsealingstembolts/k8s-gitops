@@ -1,0 +1,55 @@
+---
+data_dir: /vector-data-dir
+api:
+  enabled: true
+  address: 0.0.0.0:8686
+  playground: false
+sources:
+  internal_metrics:
+    type: internal_metrics
+  vector:
+    address: 0.0.0.0:6000
+    type: vector
+    version: "2"
+transforms:
+  kubernetes-transform:
+    type: remap
+    inputs:
+      - vector
+    source: |
+      if .source_type == "kubernetes_logs" {
+        .log = parse_json(.message) ?? .message
+        .source = "vector"
+        .kubernetes.pod_cluster_name = "ops-prod"
+        del(.file)
+        del(.kubernetes.container_id)
+        del(.kubernetes.container_image_id)
+        del(.kubernetes.pod_annotations)
+        del(.kubernetes.namespace_labels)
+        del(.kubernetes.node_labels)
+      }
+
+sinks:
+  prom_exporter:
+    type: prometheus_exporter
+    inputs:
+      - internal_metrics
+    address: 0.0.0.0:9090
+  victorialogs:
+    api_version: v8
+    compression: gzip
+    type: elasticsearch
+    endpoints:
+      - "http://vlogs-vm-stack.victoriametrics.svc.cluster.local:9428/insert/elasticsearch"
+    healthcheck:
+      enabled: false
+    inputs:
+      - kubernetes-transform
+    mode: bulk
+    request:
+      headers:
+        AccountID: "0"
+        ProjectID: "0"
+        VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+        VL-Stream-Fields: source,source_type,stream,kubernetes.pod_cluster_name,kubernetes.pod_node_name,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
+        VL-Time-Field: timestamp

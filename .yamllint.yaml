@@ -1,0 +1,10 @@
+---
+extends: default
+
+ignore: |
+  /hack/templates/
+
+rules:
+  indentation:
+    indent-sequences: whatever
+  line-length: disable

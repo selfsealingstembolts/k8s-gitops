@@ -1,0 +1,22 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: oauth2-proxy-chart
+valuesInline:
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: vault-issuer
+    hosts:
+      - oauth.k8s.example.com
+    tls:
+      - secretName: oauth-tls-ingress
+        hosts:
+          - oauth.k8s.example.com
+  sessionStorage:
+    type: redis
+    redis:
+      clientType: "standalone"
+      standalone:
+        connectionUrl: "redis://redis.redis.svc.cluster.local"

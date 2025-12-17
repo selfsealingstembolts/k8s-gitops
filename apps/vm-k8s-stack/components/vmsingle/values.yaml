@@ -1,0 +1,9 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: victoria-metrics-k8s-stack-chart
+valuesInline:
+  # -- Configures vmsingle params
+  vmsingle:
+    enabled: true

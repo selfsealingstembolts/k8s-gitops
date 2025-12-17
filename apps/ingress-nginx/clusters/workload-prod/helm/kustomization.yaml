@@ -1,0 +1,15 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../helm
+
+components:
+  - ../../../components/ingress-class-resource
+  - ../../../components/enable-ssl-passthrough
+  - ../../../components/metrics
+  - ../../../components/proxy-cache
+
+patchesStrategicMerge:
+  - values.yaml

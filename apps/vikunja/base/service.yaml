@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vikunja
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3456
+      targetPort: http-api
+      protocol: TCP
+      name: http
+    - port: 80
+      targetPort: http-frontend
+      protocol: TCP
+      name: http
+    - port: 8108
+      targetPort: http-typesense
+      protocol: TCP
+      name: http

@@ -1,0 +1,53 @@
+---
+artifactRepository:
+  archiveLogs: true
+  s3:
+    endpoint: s3.k8s.example.com
+    bucket: argo-workflows
+    accessKeySecret:
+      name: argo-workflows-secret
+      key: s3-access-key
+    secretKeySecret:
+      name: argo-workflows-secret
+      key: s3-secret-key
+    insecure: false
+    caSecret:
+      name: ca-bundle
+      key: ca.crt
+persistence:
+  archive: true
+  postgresql:
+    host: db.prod.example.com
+    port: 5432
+    database: argo_workflows
+    tableName: argo_workflows
+    userNameSecret:
+      name: argo-workflows-secret
+      key: db-username
+    passwordSecret:
+      name: argo-workflows-secret
+      key: db-password
+executor:
+  # renovate: image=harbor.k8s.example.com/local/argoexec
+  image: harbor.k8s.example.com/local/argoexec:v3.6.15
+  env:
+    - name: SSL_CERT_DIR
+      value: /etc/ssl/certs/ca.crt
+sso:
+  issuer: https://keycloak.k8s.example.com/realms/example
+  clientId:
+    name: argo-workflows-secret
+    key: oidc-client-id
+  clientSecret:
+    name: argo-workflows-secret
+    key: oidc-client-secret
+  redirectUrl: https://workflows.k8s.example.com/oauth2/callback
+  scopes:
+    - groups
+    - email
+    - profile
+  rbac:
+    enabled: true
+workflowDefaults:
+  spec:
+    serviceAccountName: executor-workflow-sa

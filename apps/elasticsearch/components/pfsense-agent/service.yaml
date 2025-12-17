@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pfsense-agent-svc
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: pfsense-agent.k8s.example.com
+spec:
+  ports:
+    - port: 9001
+      protocol: UDP
+      targetPort: 9001
+  selector:
+    agent.k8s.elastic.co/name: pfsense-agent
+  type: LoadBalancer

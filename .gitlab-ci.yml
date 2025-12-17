@@ -1,0 +1,178 @@
+---
+variables:
+  # renovate: image=quay.io/argoproj/argocd
+  # Use same image as deployed ArgoCD to ensure consistency
+  ARGOCD_VERSION: "v3.1.1"
+  RENDERED_MANIFEST_FILENAME: "rendered-manifest.yaml"
+  GIT_USER_EMAIL: "gitlab-ci@${CI_SERVER_HOST}"
+  GIT_USER_NAME: "GitLab CI Bot"
+  GIT_STRATEGY: clone
+  GIT_DEPTH: "0" # Fetch full history for accurate diff
+
+workflow:
+  rules:
+    - changes:
+        - apps/*/clusters/*/rendered-manifest.yaml
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+      changes:
+        - apps/**/*
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == 'push'
+      changes:
+        - apps/**/*
+
+stages:
+  - render
+
+render-manifests:
+  stage: render
+  image: "quay.io/argoproj/argocd:${ARGOCD_VERSION}"
+  before_script:
+    - echo "Setting up Git configuration..."
+    - git config --global user.email "${GIT_USER_EMAIL}"
+    - git config --global user.name "${GIT_USER_NAME}"
+    - git config --global --unset credential.helper || true # Remove potential existing helpers
+    - git config --global credential.helper '!f() { test "$1" = get && echo "protocol=https\nhost=${CI_SERVER_HOST}\nusername=gitlab-ci-token\npassword=${CI_JOB_TOKEN}"; }; f'
+    - git config --global --add safe.directory "${CI_PROJECT_DIR}"
+    - echo "Git configured."
+  script:
+    - set -eo pipefail
+
+    ## Determine Changed Files ##
+    # Set the base commit SHA for diffing
+    - |
+      if [ "$CI_PIPELINE_SOURCE" == "merge_request_event" ]; then
+        # For MRs, compare against the target branch base
+        BASE_SHA="$CI_MERGE_REQUEST_DIFF_BASE_SHA"
+        echo "Running for Merge Request: comparing HEAD against base $BASE_SHA"
+        # Need to make sure we have the target branch history
+        git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+        # Fetch the specific base commit if it's not already available after the fetch above
+        git fetch origin $BASE_SHA
+        CHANGED_FILES=$(git diff --name-only $BASE_SHA HEAD -- apps/)
+      elif [ "$CI_COMMIT_BEFORE_SHA" == "0000000000000000000000000000000000000000" ]; then
+        # First push to the branch, check all files in apps/
+        echo "Running for first push to branch: checking all apps"
+        # Use git ls-tree to get all files under apps/ without needing a diff base
+        CHANGED_FILES=$(git ls-tree -r --name-only HEAD apps/ || echo "")
+      else
+        # For pushes to main branch, compare against the previous commit
+        BASE_SHA="$CI_COMMIT_BEFORE_SHA"
+        HEAD_SHA="$CI_COMMIT_SHA"
+        echo "Running for Push to $CI_COMMIT_BRANCH: comparing $HEAD_SHA against $BASE_SHA"
+        # Fetch the base commit explicitly to ensure it's available
+        git fetch origin $BASE_SHA || echo "Failed to fetch $BASE_SHA, proceeding with local history if available"
+        # Get changed files between the previous commit and the current one
+        CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA -- apps/)
+      fi
+
+      # Ensure CHANGED_FILES is not empty if the commands failed
+      CHANGED_FILES="${CHANGED_FILES:-}"
+
+      echo "Changed files potentially under apps/:"
+      echo "${CHANGED_FILES}" # Might list files outside apps/, filtering happens next
+
+    ## Identify Changed Applications ##
+    # Filter files under apps/, extract the app directory, get unique list
+    - |
+      echo "Identifying changed application directories..."
+      # Ensure grep doesn't fail if CHANGED_FILES is empty
+      CHANGED_APP_DIRS=$(echo "${CHANGED_FILES}" | grep '^apps/' | sed -E 's|^(apps/[^/]+)/.*|\1|' | sort -u || true)
+
+      if [ -z "$CHANGED_APP_DIRS" ]; then
+        echo "No changes detected in any application directories (apps/). Skipping manifest generation."
+        exit 0 # Successful exit, no work needed
+      fi
+
+      echo "Applications with changes:"
+      echo "${CHANGED_APP_DIRS}"
+
+    # Render manifests for changed apps
+    - |
+      echo "Rendering manifests for changed applications..."
+      for app_dir in $CHANGED_APP_DIRS; do
+        if [ ! -d "$app_dir/clusters" ]; then
+          echo "Skipping $app_dir: No clusters/ directory found."
+          continue
+        fi
+
+        echo "Processing application: $app_dir"
+        find "$app_dir/clusters" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d $'\0' cluster_dir; do
+          cluster_name=$(basename "$cluster_dir")
+          kustomization_file="$cluster_dir/kustomization.yaml"
+          output_file="$cluster_dir/${RENDERED_MANIFEST_FILENAME}"
+
+          if [ -f "$kustomization_file" ]; then
+            echo "  Rendering manifest for cluster: $cluster_name in $app_dir"
+            TEMP_OUTPUT_FILE=$(mktemp)
+            if kustomize build --enable-helm "$cluster_dir" > "$TEMP_OUTPUT_FILE"; then
+              # Add a header comment indicating auto-generation
+              { echo "# DO NOT EDIT - auto-generated by GitLab CI pipeline job"; cat "$TEMP_OUTPUT_FILE"; } > "$output_file"
+              rm "$TEMP_OUTPUT_FILE"
+              echo "    Successfully generated $output_file"
+            else
+              echo "    ERROR: Failed to run kustomize build for $cluster_dir"
+              rm "$TEMP_OUTPUT_FILE" # Clean up temp file on error
+              # Fail the pipeline to ensure visibility
+              exit 1
+            fi
+          else
+            echo "  Skipping cluster $cluster_name: No $kustomization_file found in $cluster_dir."
+          fi
+        done
+      done
+
+    # Commit and push
+    - |
+      echo "Checking for changes in rendered manifests..."
+
+      # Check for Modified ( M), Added ( A), or Untracked (??) manifest files
+      if git status --porcelain apps/*/clusters/*/${RENDERED_MANIFEST_FILENAME} | grep -qE '^[ AM?]'; then
+        echo "Detected changes (Modified, Added, or Untracked) in rendered manifests. Committing back to the repository."
+
+        echo "Adding changed/new manifests to git..."
+        # Find potentially changed/new files and add them
+        # Using find ensures we catch files even if the glob above misses something subtle
+        find apps -path "*/clusters/*/${RENDERED_MANIFEST_FILENAME}" -print0 | while IFS= read -r -d $'\0' file; do
+          # Check status specifically for this file: Needs M, A, or ??
+          if git status --porcelain "$file" | grep -qE '^[ AM?]'; then
+            echo "Adding: $file"
+            git add "$file"
+          fi
+        done
+
+        # Double check if anything was actually added (in case grep matched but files were deleted)
+        if ! git diff --cached --quiet; then
+          echo "Committing changes..."
+          # Commit the changes
+          git commit -m "ci: Auto-render kustomize manifests for changed apps
+
+          Affected applications:
+          $(echo ${CHANGED_APP_DIRS} | sed 's/^/ -/')
+
+          Pipeline job: ${CI_JOB_URL}"
+
+          echo "Fetching latest changes for branch ${CI_COMMIT_REF_NAME} before pushing..."
+          # Fetch the specific branch we intend to push to from the 'origin' remote
+          git fetch --prune origin "${CI_COMMIT_REF_NAME}"
+
+          echo "Rebasing local commit onto origin/${CI_COMMIT_REF_NAME}..."
+          # Rebase the commit we just made onto the latest fetched state of the target branch
+          # If this fails due to conflicts, 'set -e' will stop the script, failing the job
+          git rebase "origin/${CI_COMMIT_REF_NAME}"
+          # -----------------------------
+
+          echo "Pushing changes back to branch ${CI_COMMIT_REF_NAME}..."
+          git push "${CI_REPOSITORY_URL}" "HEAD:${CI_COMMIT_REF_NAME}"
+
+          echo "Manifests committed and pushed successfully."
+        else
+           echo "No staged changes found after attempting to add files. Skipping commit."
+        fi
+      else
+        echo "No changes detected in rendered manifests after generation (manifests are up-to-date or ignored)."
+      fi
+  artifacts:
+    paths:
+      - "apps/*/clusters/*/${RENDERED_MANIFEST_FILENAME}"
+    when: always # Keep artifacts even if the job fails midway after generating some

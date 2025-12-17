@@ -1,0 +1,75 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+components:
+  - ../kubernetes-agent
+
+patches:
+  - target:
+      kind: Agent
+      name: elastic-agent
+      namespace: elastic
+    patch: |-
+      - op: remove
+        path: "/spec/kibanaRef"
+      - op: remove
+        path: "/spec/fleetServerRef"
+      - op: remove
+        path: "/spec/policyID"
+      - op: add
+        path: "/spec/daemonSet/podTemplate/spec/containers/0/env"
+        value:
+          - name: FLEET_ENROLL
+            value: "true"
+          # Set to true in case of insecure or unverified HTTP
+          - name: FLEET_INSECURE
+            value: "false"
+          - name: FLEET_URL
+            valueFrom:
+              secretKeyRef:
+                key: FLEET_URL
+                name: elastic-agent-fleet-config
+          - name: FLEET_ENROLLMENT_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: FLEET_ENROLLMENT_TOKEN
+                name: elastic-agent-fleet-config
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+      - op: replace
+        path: "/spec/daemonSet/podTemplate/spec/containers/0/command"
+        value:
+          - /usr/bin/env
+          - bash
+          - -c
+          - |
+            #!/usr/bin/env bash
+            set -e
+            if [[ -d /mnt/certs ]]; then
+              if [[ -f /usr/bin/update-ca-trust ]]; then
+                cp /mnt/certs/*/ca.crt /etc/pki/ca-trust/source/anchors/
+                /usr/bin/update-ca-trust
+              elif [[ -f /usr/sbin/update-ca-certificates ]]; then
+                cp /mnt/certs/*/ca.crt /usr/local/share/ca-certificates/
+                /usr/sbin/update-ca-certificates
+              fi
+            fi
+            /usr/bin/tini -- /usr/local/bin/docker-entrypoint -e
+      - op: add
+        path: "/spec/daemonSet/podTemplate/spec/containers/0/volumeMounts/-"
+        value:
+          name: vault-k8s-bundle
+          mountPath: /mnt/certs/vault-k8s-bundle
+          readOnly: true
+      - op: add
+        path: "/spec/daemonSet/podTemplate/spec/volumes/-"
+        value:
+          name: vault-k8s-bundle
+          configMap:
+            name: vault-k8s-bundle
+      - op: replace
+        path: "/spec/daemonSet/podTemplate/spec/containers/0/resources/limits/cpu"
+        value: 200m

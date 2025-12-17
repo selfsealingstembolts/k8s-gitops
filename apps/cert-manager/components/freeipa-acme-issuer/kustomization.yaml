@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - clusterissuer.yaml
+
+secretGenerator:
+  - name: tsig-secret
+    namespace: cert-manager
+    envs:
+     - tsig-key.env
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/common/cert-manager"

@@ -1,0 +1,36 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: gitlab-runner-chart
+releaseName: buildah
+valuesInline:
+  gitlabUrl: https://gitlab.k8s.example.com
+  certsSecretName: gitlab-custom-ca
+  runners:
+    secret: buildah-gitlab-runner-secret
+    cache:
+      secretName: gitlab-runner-cache-secret
+    config: |
+      [[runners]]
+        [runners.kubernetes]
+          image = "ubuntu:latest"
+          cap_add = ["SETFCAP"]
+        [[runners.kubernetes.volumes.config_map]]
+          name = "ca-bundle"
+          mount_path = "/etc/ssl/certs/ca.crt"
+          sub_path = "ca.crt"
+        [[runners.kubernetes.volumes.config_map]]
+          name = "ca-certificates-bundle"
+          mount_path = "/etc/ssl/certs/ca-certificates.crt"
+          sub_path = "ca-certificates.crt"
+        [runners.cache]
+          Type = "s3"
+          Path = "buildah"
+          Shared = true
+          [runners.cache.s3]
+            ServerAddress = "s3.k8s.example.com"
+            BucketName = "gitlab-runner"
+            BucketLocation = "us-east-1"
+            Insecure = false
+            AuthenticationType = "access-key"

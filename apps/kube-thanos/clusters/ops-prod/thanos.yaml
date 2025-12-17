@@ -1,0 +1,10 @@
+---
+type: s3
+config:
+  bucket: thanos
+  endpoint: 10.100.201.30:9000
+  access_key: thanos
+  secret_key: "" 
+  insecure: false
+  http_config:
+    insecure_skip_verify: true

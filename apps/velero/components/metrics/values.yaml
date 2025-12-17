@@ -1,0 +1,70 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: velero-chart
+valuesInline:
+  # Settings for Velero's prometheus metrics. Enabled by default.
+  metrics:
+    enabled: true
+
+    # Pod annotations for Prometheus
+    podAnnotations: {}
+    #   prometheus.io/scrape: "true"
+    #   prometheus.io/port: "8085"
+    #   prometheus.io/path: "/metrics"
+
+    serviceMonitor:
+      autodetect: true
+      enabled: true
+      annotations: {}
+      additionalLabels: {}
+
+      # metrics.serviceMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint
+      # ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig
+      # metricRelabelings: []
+      # metrics.serviceMonitor.relabelings [array] Prometheus relabeling rules
+      # relabelings: []
+      # ServiceMonitor namespace. Default to Velero namespace.
+      # namespace:
+      # ServiceMonitor connection scheme. Defaults to HTTP.
+      # scheme: ""
+      # ServiceMonitor connection tlsConfig. Defaults to {}.
+      # tlsConfig: {}
+    nodeAgentPodMonitor:
+      autodetect: true
+      enabled: true
+      annotations: {}
+      additionalLabels: {}
+      # ServiceMonitor namespace. Default to Velero namespace.
+      # namespace:
+      # ServiceMonitor connection scheme. Defaults to HTTP.
+      # scheme: ""
+      # ServiceMonitor connection tlsConfig. Defaults to {}.
+      # tlsConfig: {}
+
+    prometheusRule:
+      autodetect: true
+      enabled: true
+      # Additional labels to add to deployed PrometheusRule
+      additionalLabels: {}
+      # PrometheusRule namespace. Defaults to Velero namespace.
+      # namespace: ""
+      # Rules to be deployed
+      spec:
+        - alert: VeleroBackupPartialFailures
+          annotations:
+            message: Velero backup {{ $labels.schedule }} has {{ $value | humanizePercentage }} partialy failed backups.
+          expr: |-
+            velero_backup_partial_failure_total{schedule!=""} / velero_backup_attempt_total{schedule!=""} > 0.25
+          for: 15m
+          labels:
+            severity: warning
+        - alert: VeleroBackupFailures
+          annotations:
+            message: Velero backup {{ $labels.schedule }} has {{ $value | humanizePercentage }} failed backups.
+          expr: |-
+            velero_backup_failure_total{schedule!=""} / velero_backup_attempt_total{schedule!=""} > 0.25
+          for: 15m
+          labels:
+            severity: warning

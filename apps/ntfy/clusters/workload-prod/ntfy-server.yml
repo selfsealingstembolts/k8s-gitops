@@ -1,0 +1,13 @@
+---
+base-url: "https://ntfy.k8s.example.com"
+behind-proxy: true
+cache-file: "/data/cache.db"
+attachment-cache-dir: "/data/attachments"
+attachment-total-size-limit: "1G"
+auth-file: "/data/user.db"
+auth-default-access: "deny-all"
+enable-login: true
+metrics-listen-http: ":9090"
+smtp-server-listen: ":25"
+smtp-server-domain: "example.com"
+smtp-server-addr-prefix: "ntfy-"

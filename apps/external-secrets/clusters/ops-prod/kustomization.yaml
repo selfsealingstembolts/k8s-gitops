@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+generators:
+  - ./helm
+
+components:
+  - ../../components/vault-clustersecretstore
+  - ../../components/password-generator
+  - ../../components/accesskey-generator
+  - ../../components/secretkey-generator
+
+patches:
+  - target:
+      kind: ClusterSecretStore
+      name: hashicorp-vault
+    patch: |-
+      - op: replace
+        path: "/spec/provider/vault/auth/kubernetes/mountPath"
+        value: k8s/ops-prod

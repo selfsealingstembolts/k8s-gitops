@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Grafana
+      name: grafana
+    patch: |-
+      - op: add
+        path: "/spec/deployment/spec/template/spec/containers/0/image"
+        # renovate: image=harbor.k8s.example.com/local/grafana
+        value: harbor.k8s.example.com/local/grafana:12.3.0
+      - op: add
+        path: "/spec/deployment/spec/template/spec/containers/0/imagePullPolicy"
+        value: Always
+      - op: add
+        path: "/spec/config/plugins"
+        value:
+          allow_loading_unsigned_plugins: victorialogs-datasource

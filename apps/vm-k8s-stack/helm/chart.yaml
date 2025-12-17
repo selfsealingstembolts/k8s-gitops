@@ -1,0 +1,68 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: victoria-metrics-k8s-stack-chart
+name: victoria-metrics-k8s-stack
+repo: https://victoriametrics.github.io/helm-charts
+version: 0.33.5
+releaseName: vm-stack
+namespace: victoriametrics
+includeCRDs: true
+valuesInline:
+  fullnameOverride: "vm-stack"
+  global:
+    image:
+      registry: "docker.io"
+  victoria-metrics-operator:
+    enabled: true
+    crds:
+      enabled: true
+      cleanup:
+        enabled: false
+    operator:
+      disable_prometheus_converter: true
+      useCustomConfigReloader: true
+    env:
+      - name: VM_CONTAINERREGISTRY
+        value: "docker.io"
+  defaultDashboards:
+    enabled: false
+  defaultRules:
+    create: true
+  vmsingle:
+    enabled: false
+  vmcluster:
+    enabled: false
+  alertmanager:
+    enabled: false
+  vmalert:
+    enabled: false
+  vmauth:
+    enabled: false
+  vmagent:
+    enabled: false
+  grafana:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  kubelet:
+    enabled: false
+  kubeApiServer:
+    enabled: false
+  kubeControllerManager:
+     enabled: false
+  kubeDns:
+    enabled: false
+  coreDns:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeProxy:
+    enabled: false
+  prometheus-operator-crds:
+    enabled: false

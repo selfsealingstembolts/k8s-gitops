@@ -1,0 +1,27 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: sts-tls
+  namespace: minio-operator
+spec:
+  secretName: sts-tls
+  dnsNames:
+    - "sts.minio-operator.svc.cluster.local"
+  issuerRef:
+    name: issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minio-tenant-tls
+  namespace: minio-tenant
+spec:
+  secretName: minio-tenant-tls
+  dnsNames:
+    - "minio.minio-tenant.svc.cluster.local"
+    - "*.minio-hl.minio-tenant.svc.cluster.local"
+    - "*.minio-tenant.svc.cluster.local"
+    - "*.minio.minio-tenant.svc.cluster.local"
+  issuerRef:
+    name: issuer

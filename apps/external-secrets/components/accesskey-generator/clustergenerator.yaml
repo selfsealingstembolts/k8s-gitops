@@ -1,0 +1,14 @@
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: ClusterGenerator
+metadata:
+  name: accesskey-generator
+spec:
+  kind: Password
+  generator:
+    passwordSpec:
+      length: 20
+      digits: 5
+      symbols: 0
+      noUpper: false
+      allowRepeat: true

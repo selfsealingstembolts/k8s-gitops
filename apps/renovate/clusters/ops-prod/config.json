@@ -1,0 +1,18 @@
+{
+  "platform": "gitlab",
+  "autodiscover": "true",
+  "baseDir": "/tmp/renovate",
+  "gitAuthor": "Renovate Bot <renovate@example.com>",
+  "endpoint": "https://gitlab.k8s.example.com/api/v4/",
+
+  "repositoryCache": "enabled",
+  "redisUrl": "redis://redis.redis.svc.cluster.local:6379",
+  "persistRepoData": "true",
+
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "registryUrls": ["https://docker-registry.k8s.example.com"]
+    }
+  ]
+}

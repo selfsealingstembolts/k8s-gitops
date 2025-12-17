@@ -1,0 +1,32 @@
+---
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+spec:
+  instances: 1
+  # renovate: image=harbor.k8s.example.com/local/keycloak
+  image: harbor.k8s.example.com/local/keycloak:26.4.5
+  bootstrapAdmin:
+    user:
+      secret: keycloak-admin-secret
+  db:
+    vendor: postgres
+    host: keycloak-cnpg-cluster-rw
+    port: 5432
+    database: keycloak
+    usernameSecret:
+      name: keycloak-cnpg-secret
+      key: username
+    passwordSecret:
+      name: keycloak-cnpg-secret
+      key: password
+  hostname:
+    hostname: https://keycloak.k8s.example.com
+    backchannelDynamic: true
+  ingress:
+    enabled: false
+  http:
+    tlsSecret: keycloak-tls
+  proxy:
+    headers: xforwarded

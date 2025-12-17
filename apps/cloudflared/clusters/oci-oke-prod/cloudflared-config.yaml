@@ -1,0 +1,19 @@
+---
+# Name of the tunnel you want to run
+tunnel: oci-ingress-nginx-public
+credentials-file: /etc/cloudflared/creds/credentials.json
+# Serves the metrics server under /metrics and the readiness server under /ready
+metrics: 0.0.0.0:2000
+# Autoupdates applied in a k8s pod will be lost when the pod is removed or restarted, so
+# autoupdate doesn't make sense in Kubernetes. However, outside of Kubernetes, we strongly
+# recommend using autoupdate.
+no-autoupdate: true
+# The `ingress` block tells cloudflared which local service to route incoming
+# requests to. For more about ingress rules, see
+# https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/configuration/ingress
+#
+ingress:
+# This rule sends all requests to nginx ingress controller, which proxies them further to correct services
+- service: https://ingress-nginx-public-controller.ingress-nginx.svc.cluster.local:443
+  originRequest:
+    noTLSVerify: true

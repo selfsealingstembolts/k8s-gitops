@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tanka-cmp-config
+data:
+  plugin.yaml: |
+    apiVersion: argoproj.io/v1alpha1
+    kind: ConfigManagementPlugin
+    metadata:
+      name: tanka-cmp
+    spec:
+      version: v0.24.0
+      init:
+        command:
+          - 'sh'
+          - '-c'
+          - 'jb install && cp ${ARGOCD_ENV_SECRET_FILE} ./environments/%{ARGOCD_ENV_TK_ENV}'
+      generate:
+        command:
+          - 'sh'
+          - '-c'
+          - '/usr/local/bin/tk show environments/${ARGOCD_ENV_TK_ENV} --dangerous-allow-redirect --tla-str name=${ARGOCD_ENV_TK_ENV} --tla-str apiServer=${ARGOCD_ENV_TK_API_SERVER} --tla-str namespace=${ARGOCD_ENV_TK_NAMESPACE}'
+      discover:
+        fileName: "./jsonnetfile.json"

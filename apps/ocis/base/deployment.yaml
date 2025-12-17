@@ -1,0 +1,58 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %NAME%
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: %NAME%
+          image: %IMAGE%:%TAG%
+          imagePullPolicy: IfNotPresent
+          env:
+            - name:
+              value:
+          envFrom:
+            - configMapRef:
+                name:
+            - secretRef:
+                name:
+          ports:
+            - name: http
+              containerPort: %PORT%
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: %PORT%
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: %PORT%
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: %PORT%
+            initialDelaySeconds: 30
+            failureThreshold: 30
+            timeoutSeconds: 1
+            periodSeconds: 5
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: %NAME%-config

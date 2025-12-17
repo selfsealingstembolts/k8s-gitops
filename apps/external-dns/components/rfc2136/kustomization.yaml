@@ -1,0 +1,34 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  - target:
+      kind: Deployment
+      name: external-dns
+    patch: |-
+      - op: replace
+        path: "/metadata/name"
+        value: external-dns-rfc2136
+
+      - op: replace
+        path: "/spec/template/spec/containers/0/args"
+        value:
+          - --log-level=info
+          - --log-format=text
+          - --interval=1m
+          - --source=service
+          - --source=ingress
+          - --policy=sync
+          - --registry=txt
+          - --txt-prefix=external-dns-
+          - --provider=rfc2136
+          - --rfc2136-host=$(RFC2136_HOST)
+          - --rfc2136-port=$(RFC2136_PORT)
+          - --rfc2136-zone=$(RFC2136_ZONE)
+          - --rfc2136-tsig-secret=$(TSIG_SECRET_KEY)
+          - --rfc2136-tsig-secret-alg=$(TSIG_SECRET_ALG)
+          - --rfc2136-tsig-keyname=$(TSIG_KEY_NAME)
+          - --rfc2136-tsig-axfr
+          - --domain-filter=$(DOMAIN_FILTER)
+          - --txt-owner-id=$(TXT_OWNER_ID)

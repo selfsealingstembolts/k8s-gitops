@@ -1,0 +1,18 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+secretGenerator:
+  - name: grafana-oauth
+    envs:
+      - secrets/grafana-oauth.env
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        avp.kubernetes.io/path: "internal/data/k8s/ops-prod/grafana"
+
+patches:
+  - path: grafana.jsonpatch
+    target:
+      kind: Grafana
+      name: grafana

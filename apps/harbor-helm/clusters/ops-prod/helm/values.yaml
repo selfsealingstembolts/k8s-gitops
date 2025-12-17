@@ -1,0 +1,84 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: harbor-chart
+valuesInline:
+  expose:
+    ingress:
+      hosts:
+        core: harbor.k8s.example.com
+      annotations:
+        cert-manager.io/cluster-issuer: "vault-issuer"
+        cert-manager.io/common-name: "harbor.k8s.example.com"
+
+  externalURL: https://harbor.k8s.example.com
+
+  internalTLS:
+    enabled: true
+    certSource: secret
+    trustCa: harbor-internal-ca
+    core:
+      secretName: core-internal-certs
+    jobservice:
+      secretName: jobservice-internal-certs
+    registry:
+      secretName: registry-internal-certs
+    portal:
+      secretName: portal-internal-certs
+    trivy:
+      secretName: trivy-internal-certs
+
+  core:
+    replicas: 2
+  jobservice:
+    replicas: 2
+  portal:
+    replicas: 2
+  registry:
+    replicas: 2
+
+  persistence:
+    enabled: true
+    persistentVolumeClaim:
+      registry:
+        storageClass: truenas-iscsi-csi
+        accessMode: ReadWriteOnce
+        size: 5Gi
+      jobservice:
+        jobLog:
+          storageClass: truenas-nfs-csi
+          accessMode: ReadWriteMany
+          size: 1Gi
+      trivy:
+        storageClass: truenas-iscsi-csi
+        accessMode: ReadWriteOnce
+        size: 5Gi
+    imageChartStorage:
+      # Specify whether to disable `redirect` for images and chart storage, for
+      # backends which not supported it (such as using minio for `s3` storage type), please disable
+      # it. To disable redirects, simply set `disableredirect` to `true` instead.
+      # Refer to
+      # https://github.com/docker/distribution/blob/master/docs/configuration.md#redirect
+      # for the detail.
+      disableredirect: true
+      type: s3
+      s3:
+        bucket: harbor
+        existingSecret: harbor-s3-secret
+        regionendpoint: https://s3.k8s.example.com
+        secure: true
+        skipverify: true
+
+  cache:
+    enabled: false
+
+  database:
+    type: external
+    external:
+      host: harbor-cnpg-cluster-rw
+      port: 5432
+      username: harbor
+      coreDatabase: harbor
+      existingSecret: harbor-cnpg-secret
+      sslmode: disable

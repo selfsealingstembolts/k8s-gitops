@@ -1,0 +1,14 @@
+---
+# Vikunja needs to know the frontend URL for password reset emails.
+# So you might need to provide its value, if you're not using an ingress.
+# service:
+#   frontendUrl: http://vikunja.local
+
+typesense:
+  # Typesense will only work if it is enabled below (typesense.enabled).
+  url: "release-name-typesense:8108"
+  apiKey: "typesense"
+redis:
+  # Redis will only work if it is enabled below (redis.enabled).
+  host: "release-name-redis-master:6379"
+  db: "release-name"

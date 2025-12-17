@@ -1,0 +1,15 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: vault-issuer
+spec:
+  vault:
+    path: pki/sign/oci-example-com
+    server: https://vault.oci.example.com
+    caBundleSecretRef:
+      name: vault-oci-bundle
+      key: ca.crt
+    auth:
+      kubernetes:
+        mountPath: /v1/auth/oci-cluster

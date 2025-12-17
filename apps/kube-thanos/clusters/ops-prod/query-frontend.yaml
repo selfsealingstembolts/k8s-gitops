@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-query-frontend
+spec:
+  template:
+    spec:
+      containers:
+        - name: thanos-query-frontend
+          args:
+            - query-frontend
+            - --log.level=info
+            - --log.format=logfmt
+            - --query-frontend.compress-responses
+            - --http-address=0.0.0.0:9090
+            - --query-frontend.downstream-url=http://thanos-query.thanos.svc.cluster.local:9090
+            - --query-range.split-interval=12h
+            - --labels.split-interval=12h
+            - --query-range.max-retries-per-request=10
+            - --labels.max-retries-per-request=10
+            - --query-frontend.log-queries-longer-than=10s
+            - |-
+              --query-range.response-cache-config="config":
+                "addr": "redis.redis.svc.cluster.local:6379"
+                "db": 0
+                "dial_timeout": "5s"
+                "read_timeout": "3s"
+                "write_timeout": "3s"
+                "pool_size": 100
+                "min_idle_conns": 10
+                "idle_timeout": "5m0s"
+                "max_conn_age": "0s"
+                "max_get_multi_concurrency": 100
+                "get_multi_batch_size": 100
+                "max_set_multi_concurrency": 100
+                "set_multi_batch_size": 100
+                "expiration": "24h0m0s"
+              "type": "redis"
+            - |-
+              --labels.response-cache-config="config":
+                "addr": "redis.redis.svc.cluster.local:6379"
+                "db": 0
+                "dial_timeout": "5s"
+                "read_timeout": "3s"
+                "write_timeout": "3s"
+                "pool_size": 100
+                "min_idle_conns": 10
+                "idle_timeout": "5m0s"
+                "max_conn_age": "0s"
+                "max_get_multi_concurrency": 100
+                "get_multi_batch_size": 100
+                "max_set_multi_concurrency": 100
+                "set_multi_batch_size": 100
+                "expiration": "24h0m0s"
+              "type": "redis"

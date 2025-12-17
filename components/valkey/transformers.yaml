@@ -1,0 +1,12 @@
+---
+namePrefix:
+  - path: spec/target/name
+    kind: ExternalSecret
+  - path: spec/selector/secret/name
+    kind: PushSecret
+  - path: spec/template/spec/volumes/secret/secretName
+
+labels:
+  - path: spec/target/template/metadata/labels
+    create: true
+    kind: ExternalSecret

@@ -1,0 +1,31 @@
+---
+apiVersion: minio.min.io/v2
+kind: Tenant
+metadata:
+  name: storage
+  namespace: minio-tenant
+spec:
+  externalCaCertSecret:
+    - name: ipa-ca
+      type: Opaque
+  pools:
+    - servers: 4
+      name: pool-0
+      volumesPerServer: 1
+      volumeClaimTemplate:
+        metadata:
+          name: data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 24Gi
+          storageClassName: local-storage
+  prometheus:
+    storageClassName: longhorn
+  log:
+    db:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn

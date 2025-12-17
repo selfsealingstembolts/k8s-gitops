@@ -1,0 +1,120 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: trigger-rollout-on-dependency-update
+  annotations:
+    policies.kyverno.io/title: Trigger Rollout on Dependency Update
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/subject: Deployment, StatefulSet, DaemonSet, Secret, ConfigMap
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/description: >-
+      This policy watches for updates to Secrets and ConfigMaps. It then targets all
+      Deployments, StatefulSets, and DaemonSets in the same namespace and checks
+      if they have a 'rollout-on-change.kyverno.io/secret-dependencies'
+      or 'rollout-on-change.kyverno.io/configmap-dependencies'
+      annotation referencing the updated resource. If the condition is met, it adds a
+      'kyverno.io/restartedAt' annotation to the pod template, triggering a rollout.
+spec:
+  failurePolicy: Ignore
+  background: true
+  rules:
+  - name: trigger-rollout-on-secret-change
+    match:
+      any:
+      - resources:
+          kinds:
+          - Secret
+          operations:
+          - UPDATE
+    mutate:
+      patchStrategicMerge:
+        spec:
+          template:
+            metadata:
+              annotations:
+                +(kyverno.io/restartedAt): "{{time_now_utc()}}"
+      targets:
+        - apiVersion: "apps/v1"
+          kind: "Deployment"
+          namespace: "{{request.namespace}}"
+          preconditions:
+            any:
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.metadata.annotations.\"rollout-on-change.kyverno.io/secret-dependencies\" || ''}}"
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.spec.template.metadata.annotations.\"rollout-on-change.kyverno.io/secret-dependencies\" || ''}}"
+        - apiVersion: "apps/v1"
+          kind: "StatefulSet"
+          namespace: "{{request.namespace}}"
+          preconditions:
+            any:
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.metadata.annotations.\"rollout-on-change.kyverno.io/secret-dependencies\" || ''}}"
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.spec.template.metadata.annotations.\"rollout-on-change.kyverno.io/secret-dependencies\" || ''}}"
+        - apiVersion: "apps/v1"
+          kind: "DaemonSet"
+          namespace: "{{request.namespace}}"
+          preconditions:
+            any:
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.metadata.annotations.\"rollout-on-change.kyverno.io/secret-dependencies\" || ''}}"
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.spec.template.metadata.annotations.\"rollout-on-change.kyverno.io/secret-dependencies\" || ''}}"
+
+  - name: trigger-rollout-on-configmap-change
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          operations:
+          - UPDATE
+    mutate:
+      patchStrategicMerge:
+        spec:
+          template:
+            metadata:
+              annotations:
+                +(kyverno.io/restartedAt): "{{time_now_utc()}}"
+      targets:
+        - apiVersion: "apps/v1"
+          kind: "Deployment"
+          namespace: "{{request.namespace}}"
+          preconditions:
+            any:
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.metadata.annotations.\"rollout-on-change.kyverno.io/configmap-dependencies\" || ''}}"
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.spec.template.metadata.annotations.\"rollout-on-change.kyverno.io/configmap-dependencies\" || ''}}"
+        - apiVersion: "apps/v1"
+          kind: "StatefulSet"
+          namespace: "{{request.namespace}}"
+          preconditions:
+            any:
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.metadata.annotations.\"rollout-on-change.kyverno.io/configmap-dependencies\" || ''}}"
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.spec.template.metadata.annotations.\"rollout-on-change.kyverno.io/configmap-dependencies\" || ''}}"
+        - apiVersion: "apps/v1"
+          kind: "DaemonSet"
+          namespace: "{{request.namespace}}"
+          preconditions:
+            any:
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.metadata.annotations.\"rollout-on-change.kyverno.io/configmap-dependencies\" || ''}}"
+            - key: "{{request.object.metadata.name}}"
+              operator: AnyIn
+              value: "{{target.spec.template.metadata.annotations.\"rollout-on-change.kyverno.io/configmap-dependencies\" || ''}}"

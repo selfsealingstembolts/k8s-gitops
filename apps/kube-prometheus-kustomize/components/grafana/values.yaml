@@ -1,0 +1,40 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kube-prometheus-chart
+valuesInline:
+
+  ## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
+  ##
+  grafana:
+    enabled: true
+
+    ingress:
+      enabled: true
+
+    # Use an existing secret for the admin user.
+    admin:
+      ## Name of the secret. Can be templated.
+      existingSecret: grafana-admin-secret
+      userKey: user
+      passwordKey: password
+
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        labelValue: "1"
+        multicluster:
+          global:
+            enabled: false
+          etcd:
+            enabled: false
+        provider:
+          disableDelete: true
+          allowUiUpdates: false
+          foldersFromFilesStructure: true
+        searchNamespace: ALL
+        watchMethod: WATCH
+        resource: configmap
+        folderAnnotation: "dashboard-folder"

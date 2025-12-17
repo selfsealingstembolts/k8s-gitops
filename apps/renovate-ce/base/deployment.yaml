@@ -1,0 +1,61 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: renovate-ce
+spec:
+  replicas: 1
+  template:
+    metadata:
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: mend-renovate-ce
+          image: "ghcr.io/mend/renovate-ce:latest"
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: renovate-ce-config
+            - secretRef:
+                name: renovate-ce-secret
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "10m"
+          volumeMounts:
+            - name: renovate-ce-config-js
+              mountPath: /usr/src/app/config.js
+              subPath: config.js
+            - name: renovate-ce-cache
+              mountPath: /tmp/renovate
+      securityContext:
+        fsGroup: 12021
+        runAsUser: 12021
+      volumes:
+        - name: renovate-ce-config-js
+          configMap:
+            name: renovate-ce-config-js
+        - name: renovate-ce-cache
+          persistentVolumeClaim:
+            claimName: renovate-ce-cache

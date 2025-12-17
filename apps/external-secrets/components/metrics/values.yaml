@@ -1,0 +1,14 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: external-secrets-chart
+valuesInline:
+  # -- If true external secrets will use recommended kubernetes
+  # annotations as prometheus metric labels.
+  extendedMetricLabels: true
+  serviceMonitor:
+    # -- Specifies whether to create a ServiceMonitor resource for collecting Prometheus metrics
+    enabled: true
+    # -- namespace where you want to install ServiceMonitors
+    namespace: ""

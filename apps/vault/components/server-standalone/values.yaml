@@ -1,0 +1,19 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: vault-chart
+valuesInline:
+  server:
+    enabled: true
+
+    ingress:
+      enabled: false
+
+    standalone:
+      enabled: true
+      config: ""
+
+    ha:
+      enabled: false
+      config: ""

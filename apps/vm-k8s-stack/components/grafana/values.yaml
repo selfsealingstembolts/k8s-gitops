@@ -1,0 +1,14 @@
+---
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: victoria-metrics-k8s-stack-chart
+valuesInline:
+  grafana:
+    enabled: true
+    ## all values for grafana helm chart can be specified here
+    sidecar:
+      dashboards:
+        enabled: true
+        multicluster: true
+

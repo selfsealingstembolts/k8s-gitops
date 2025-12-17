@@ -1,0 +1,17 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: victorialogs
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  allowCrossNamespaceImport: true
+  datasource:
+    name: VictoriaLogs
+    type: victorialogs-datasource
+    access: proxy
+    url: http://vlogs-vm-stack.victoriametrics.svc:9428
+    isDefault: true
+    editable: false

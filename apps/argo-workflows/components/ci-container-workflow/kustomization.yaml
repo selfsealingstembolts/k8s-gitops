@@ -1,0 +1,9 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - wf-template-ci-container.yaml
+  - wf-template-parse-config.yaml
+  - wf-template-build-container.yaml
+  # - wf-ci-container.yaml

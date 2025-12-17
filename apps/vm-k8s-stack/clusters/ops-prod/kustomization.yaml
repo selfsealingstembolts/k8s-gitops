@@ -1,0 +1,33 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+components:
+  # - ../../components/prometheus-operator-crds
+  - ../../components/grafana-operator
+  - ../../components/graphite-listener
+  - ../../components/vlogs
+  - ../../components/dashboards
+
+generators:
+  - ./helm
+
+patches:
+  - target:
+      kind: Service
+      name: vm-stack-graphite-listener
+    patch: |-
+      - op: replace
+        path: "/metadata/annotations/external-dns.alpha.kubernetes.io~1hostname"
+        value: graphite.k8s.example.com
+
+  - target:
+      kind: VLogs
+      name: vm-stack
+    patch: |-
+      - op: replace
+        path: "/spec/storage/resources/requests/storage"
+        value: 100Gi
+      - op: replace
+        path: "/spec/storage/storageClassName"
+        value: "truenas-iscsi-slow-csi"

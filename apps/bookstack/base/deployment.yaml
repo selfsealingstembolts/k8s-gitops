@@ -1,0 +1,50 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookstack
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+    spec:
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: bookstack
+          image: solidnerd/bookstack:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: bookstack-env
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            failureThreshold: 30
+            timeoutSeconds: 1
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "24Mi"
+              cpu: "1m"

@@ -1,0 +1,111 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - ../../components/ingress
+  - pv.yaml
+  - storageclass.yaml
+
+patches:
+  - path: tenant.yaml
+    target:
+      kind: Tenant
+
+  - target:
+      kind: Ingress
+      name: minio-storage-api
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: vault-issuer
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1common-name"
+        value: minio.oci.example.com
+      - op: replace
+        path: "/spec/tls/0/hosts/0"
+        value: minio.oci.example.com
+      - op: replace
+        path: "/spec/tls/0/secretName"
+        value: minio-storage-api-tls
+      - op: replace
+        path: "/spec/rules/0/host"
+        value: minio.oci.example.com
+      - op: add
+        path: "/spec/ingressClassName"
+        value: ingress-nginx-private
+
+  - target:
+      kind: Ingress
+      name: minio-storage-console
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: vault-issuer
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1common-name"
+        value: minio-console.oci.example.com
+      - op: replace
+        path: "/spec/tls/0/hosts/0"
+        value: minio-console.oci.example.com
+      - op: replace
+        path: "/spec/tls/0/secretName"
+        value: minio-storage-console-tls
+      - op: replace
+        path: "/spec/rules/0/host"
+        value: minio-console.oci.example.com
+      - op: add
+        path: "/spec/ingressClassName"
+        value: ingress-nginx-private
+
+  - target:
+      kind: Ingress
+      name: minio-operator-console
+    patch: |-
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1cluster-issuer"
+        value: vault-issuer
+      - op: add
+        path: "/metadata/annotations/cert-manager.io~1common-name"
+        value: minio-operator.oci.example.com
+      - op: replace
+        path: "/spec/tls/0/hosts/0"
+        value: minio-operator.oci.example.com
+      - op: replace
+        path: "/spec/tls/0/secretName"
+        value: minio-operator-console-tls
+      - op: replace
+        path: "/spec/rules/0/host"
+        value: minio-operator.oci.example.com
+      - op: add
+        path: "/spec/ingressClassName"
+        value: ingress-nginx-private
+
+
+secretGenerator:
+  - name: storage-user
+    namespace: minio-tenant
+    type: Opaque
+    behavior: replace
+    envs:
+      - secrets/user.env
+    options:
+      disableNameSuffixHash: true
+
+  - name: storage-configuration
+    namespace: minio-tenant
+    type: Opaque
+    behavior: replace
+    files:
+      - config.env=secrets/config.env
+    options:
+      disableNameSuffixHash: true
+
+  - name: ipa-ca
+    namespace: minio-tenant
+    type: Opaque
+    files:
+      - public.crt=secrets/ipa.crt
+    options:
+      disableNameSuffixHash: true

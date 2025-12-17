@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey-headless
+spec:
+  ports:
+  - port: 6379
+    name: client
+    targetPort: 6379
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey
+spec:
+  ports:
+  - port: 6379
+    name: client
+    targetPort: 6379
+  type: ClusterIP

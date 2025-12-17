@@ -1,0 +1,29 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: vault-secrets-operator-system
+
+components:
+  - ../../components/vault-auth-global
+  - ../../components/vault-oci-connection
+
+generators:
+  - ./helm
+
+patches:
+  - target:
+      kind: VaultAuthGlobal
+      name: default
+    patch: |-
+      - op: replace
+        path: "/spec/kubernetes/mount"
+        value: "k8s/ops-prod"
+
+  - target:
+      kind: VaultAuth
+      name: vault-oci-auth
+    patch: |-
+      - op: replace
+        path: "/spec/mount"
+        value: "k8s-ops-prod"
